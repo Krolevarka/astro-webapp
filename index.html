@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Astro Intelligence Access</title>
+    <title>Astro Intelligence</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,260 +11,185 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        /* --- НАСТРОЙКИ --- */
         :root {
-            --card-bg: rgba(15, 15, 30, 0.65);
-            --accent-color: #a67c52;
-            --highlight: #ffffff;
-            --rub-color: #ffffff;
-            --stars-text-color: #FFD700;
+            --card-bg: rgba(20, 20, 35, 0.7);
             --font-title: 'Cormorant Garamond', serif;
-            --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            --font-btn: 'Montserrat', sans-serif;
+            --font-main: 'Montserrat', sans-serif;
         }
 
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body {
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(-45deg, #020205, #0a0a1a, #150a25, #050510);
+            margin: 0; padding: 0;
+            background: linear-gradient(-45deg, #020205, #0f0f20, #1a1025, #020205);
             background-size: 400% 400%;
             animation: gradient-flow 30s ease infinite;
-            color: var(--highlight);
-            font-family: var(--font-body);
+            color: #fff;
+            font-family: var(--font-main);
             overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            perspective: 800px; /* Усилили перспективу для 3D эффекта */
+            width: 100vw; height: 100vh;
+            display: flex; flex-direction: column;
+            perspective: 800px;
+            /* Ускорение рендеринга текста */
+            -webkit-font-smoothing: antialiased;
         }
 
         @keyframes gradient-flow {
-            0% { background-position: 0% 50%; }
+            0%, 100% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
         }
 
-        /* --- СЛОЙ ТУМАННОСТИ --- */
-        .nebula-container { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; opacity: 0.25; }
-        .nebula { position: absolute; border-radius: 50%; filter: blur(80px); }
-        .nebula-1 { top: -20%; left: -20%; width: 60%; height: 60%; background: radial-gradient(circle, rgba(100, 50, 200, 0.3), transparent 70%); animation: float-nebula 30s infinite alternate ease-in-out; }
-        .nebula-2 { bottom: -30%; right: -30%; width: 70%; height: 70%; background: radial-gradient(circle, rgba(50, 100, 250, 0.2), transparent 70%); animation: float-nebula 40s infinite alternate-reverse ease-in-out; }
-        @keyframes float-nebula { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(5%, 2%) scale(1.05); } }
-
         /* --- ЭФФЕКТЫ --- */
+        .nebula-container { position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: 0.3; }
+        .nebula { position: absolute; border-radius: 50%; filter: blur(80px); transform: translate3d(0,0,0); }
+        .n1 { top: -20%; left: -20%; width: 70%; height: 70%; background: radial-gradient(circle, rgba(120,60,220,0.25), transparent 70%); animation: float 30s infinite alternate ease-in-out; }
+        .n2 { bottom: -30%; right: -30%; width: 80%; height: 80%; background: radial-gradient(circle, rgba(60,120,250,0.2), transparent 70%); animation: float 40s infinite alternate-reverse ease-in-out; }
+        @keyframes float { 0% { transform: translate3d(0,0,0) scale(1); } 100% { transform: translate3d(5%, 2%, 0) scale(1.05); } }
+
         .effects-layer {
-            position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;
-            transition: opacity 1.5s ease-in-out; opacity: 0;
-            /* Центрируем содержимое для 3D трансформаций */
+            position: fixed; inset: 0; pointer-events: none; z-index: 2;
+            opacity: 0;
+            transition: opacity 0.6s ease; /* Быстрый отклик */
+            will-change: opacity; 
             display: flex; align-items: center; justify-content: center;
             transform-style: preserve-3d;
         }
         .effects-layer.active { opacity: 1; }
 
-        /* [NEW] ГАЛАКТИКА V2: 3D ДИСК С ЧЕРНОЙ ДЫРОЙ */
-        .galaxy-wrapper {
-            position: relative;
-            width: 300px; height: 300px;
-            /* Наклоняем галактику в пространстве */
-            transform: rotateX(65deg);
-            transform-style: preserve-3d;
-        }
-
-        .galaxy-container {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            transform-style: preserve-3d;
-            animation: rotate-galaxy 40s linear infinite;
-        }
-
-        .galaxy-star {
-            position: absolute;
-            border-radius: 50%;
-            /* Свечение звезды зависит от ее цвета (задается в JS) */
-            box-shadow: 0 0 6px currentColor; 
-        }
-
-        /* Черная дыра (Ядро) */
-        .galaxy-core {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%) rotateX(-65deg); /* Компенсируем наклон, чтобы дыра смотрела на нас, или оставляем плоской? Оставим плоской в плоскости галактики */
-            width: 40px; height: 40px;
-            background: #000; /* Сама дыра черная */
-            border-radius: 50%;
-            z-index: 5;
-            /* Аккреционный диск (свечение вокруг) */
-            box-shadow: 
-                0 0 10px 2px rgba(255, 200, 100, 0.8), /* Внутреннее кольцо (золото) */
-                0 0 30px 10px rgba(100, 100, 255, 0.4), /* Внешнее гало (синий) */
-                0 0 60px 20px rgba(255, 255, 255, 0.2); /* Дальний свет */
-        }
-        
-        /* Джеты (Лучи энергии из центра) - Опционально, но красиво */
-        .galaxy-core::after {
-            content: ''; position: absolute;
-            top: 50%; left: 50%;
-            width: 100px; height: 2px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
-            transform: translate(-50%, -50%) rotate(90deg);
-            filter: blur(4px);
-            opacity: 0.6;
-            animation: pulse-jet 3s ease-in-out infinite;
-        }
-
-        @keyframes rotate-galaxy {
-            from { transform: rotateZ(0deg); }
-            to { transform: rotateZ(360deg); }
-        }
-        
-        @keyframes pulse-jet {
-            0%, 100% { opacity: 0.4; height: 1px; }
-            50% { opacity: 0.7; height: 4px; }
-        }
+        /* Галактика */
+        .galaxy-wrapper { position: relative; width: 300px; height: 300px; transform: rotateX(65deg); transform-style: preserve-3d; }
+        .galaxy-spinner { position: absolute; inset: 0; transform-style: preserve-3d; animation: rotate-center 60s linear infinite; will-change: transform; }
+        .galaxy-core { position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%); background: #000; border-radius: 50%; box-shadow: 0 0 15px 2px rgba(255,200,100,0.9), 0 0 40px 10px rgba(100,100,255,0.5); }
+        .g-star { position: absolute; border-radius: 50%; box-shadow: 0 0 4px currentColor; }
+        @keyframes rotate-center { from { transform: rotateZ(0deg); } to { transform: rotateZ(360deg); } }
 
         /* Орбиты */
-        .orbit-ring { position: absolute; top: 50%; left: 50%; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 50%; transform: translate(-50%, -50%); }
-        .orbit-1 { width: 280px; height: 280px; animation: rotate-orbit 30s linear infinite; }
-        .orbit-2 { width: 450px; height: 450px; animation: rotate-orbit 50s linear infinite reverse; border-color: rgba(166, 124, 82, 0.2); }
-        .planet-dot { position: absolute; top: 50%; left: 100%; width: 8px; height: 8px; background: #fff; border-radius: 50%; box-shadow: 0 0 10px #fff; transform: translate(-50%, -50%); }
-        @keyframes rotate-orbit { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+        .orbit-ring { position: absolute; top: 50%; left: 50%; border: 1px solid rgba(255,255,255,0.15); border-radius: 50%; transform: translate(-50%, -50%); will-change: transform; }
+        .o1 { width: 280px; height: 280px; animation: orbit-spin 30s linear infinite; }
+        .o2 { width: 450px; height: 450px; animation: orbit-spin 50s linear infinite reverse; border-color: rgba(166,124,82,0.2); }
+        .planet { position: absolute; top: 50%; left: 100%; width: 8px; height: 8px; background: #fff; border-radius: 50%; box-shadow: 0 0 10px #fff; transform: translate(-50%, -50%); }
+        @keyframes orbit-spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
 
         /* Метеоры */
-        .shooting-stars-container { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; transform: rotateZ(45deg); pointer-events: none; z-index: 1; }
-        .shooting-star { position: absolute; height: 2px; background: linear-gradient(-45deg, rgba(255,255,255,1), rgba(255,255,255,0)); border-radius: 999px; filter: drop-shadow(0 0 6px rgba(105, 155, 255, 0.8)); animation: shooting-fly 3.5s linear infinite; opacity: 0; }
-        .shooting-star:nth-child(1) { top: 20%; left: 20%; width: 150px; animation-delay: 0s; animation-duration: 4s; }
-        .shooting-star:nth-child(2) { top: 50%; left: 50%; width: 200px; animation-delay: 2s; animation-duration: 3s; }
-        .shooting-star:nth-child(3) { top: 30%; left: 70%; width: 120px; animation-delay: 1.2s; animation-duration: 5s; }
-        .shooting-star:nth-child(4) { top: 70%; left: 30%; width: 180px; animation-delay: 3s; animation-duration: 3.5s; }
-        .shooting-star:nth-child(5) { top: 10%; left: 90%; width: 160px; animation-delay: 0.5s; animation-duration: 4.5s; }
-        .shooting-star:nth-child(6) { top: 80%; left: 10%; width: 220px; animation-delay: 2.5s; animation-duration: 4s; }
-        .shooting-star:nth-child(7) { top: 60%; left: 60%; width: 140px; animation-delay: 1.8s; animation-duration: 3.2s; }
-        @keyframes shooting-fly { 0% { transform: translateX(-150vh); opacity: 0; } 5% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(150vh); opacity: 0; } }
+        .meteors-wrap { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; transform: rotateZ(45deg); pointer-events: none; z-index: 1; }
+        .meteor { position: absolute; height: 2px; background: linear-gradient(-45deg, #fff, transparent); border-radius: 99px; filter: drop-shadow(0 0 6px rgba(100,150,255,0.8)); opacity: 0; animation: meteor-fly 4s linear infinite; }
+        @keyframes meteor-fly { 0% { transform: translateX(-150vh); opacity: 0; } 10% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(150vh); opacity: 0; } }
 
-        /* Звезды (Статика) */
-        .stars-container-parallax { position: fixed; inset: -5%; width: 110%; height: 110%; pointer-events: none; z-index: 2; transition: transform 0.1s ease-out; }
-        .star { position: absolute; background: white; border-radius: 50%; opacity: 0; animation: twinkle var(--duration) infinite ease-in-out; }
-        @keyframes twinkle { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: var(--opacity); transform: scale(1); } 100% { opacity: 0; transform: scale(0.5); } }
+        /* Статичные звезды */
+        .stars-bg { position: fixed; inset: 0; z-index: 0; }
+        .s-point { position: absolute; background: #fff; border-radius: 50%; opacity: 0; animation: twinkle var(--d) infinite ease-in-out; }
+        @keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(0.5); } 50% { opacity: var(--o); transform: scale(1); } }
 
-        /* --- UI --- */
-        .container { position: relative; z-index: 10; padding: 12px; max-width: 380px; margin: 0 auto; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
-        .brand-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
-        .logo-container { width: 64px; height: 64px; border-radius: 50%; margin-bottom: 8px; border: 1px solid rgba(166, 124, 82, 0.4); background: #050510; box-shadow: 0 0 20px rgba(166, 124, 82, 0.15); animation: breathe 6s infinite ease-in-out; padding: 3px; position: relative; z-index: 20; }
-        .logo-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; background: #050510; }
-        @keyframes breathe { 0%, 100% { box-shadow: 0 0 10px rgba(166, 124, 82, 0.1); transform: scale(1); } 50% { box-shadow: 0 0 20px rgba(166, 124, 82, 0.3); transform: scale(1.02); } }
-        .brand-name { font-family: var(--font-title); font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; background: linear-gradient(120deg, #a67c52 0%, #d4af37 20%, #fcf6ba 45%, #ffffff 50%, #fcf6ba 55%, #d4af37 80%, #a67c52 100%); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 12s linear infinite; margin-bottom: 2px; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
-        @keyframes shine { to { background-position: 200% center; } }
-        .page-subtitle { text-align: center; color: #999; font-size: 12px; font-weight: 400; text-shadow: 0 1px 5px rgba(0,0,0,0.8); letter-spacing: 1px; }
-        
-        .plans { display: flex; flex-direction: column; gap: 8px; }
-        .card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 14px; padding: 10px 14px; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); position: relative; display: flex; align-items: center; gap: 10px; overflow: hidden; }
-        .card.active { background: rgba(166, 124, 82, 0.15); box-shadow: 0 0 25px rgba(166, 124, 82, 0.1); border-color: rgba(166, 124, 82, 0.3); }
-        .card.active::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 14px; padding: 1px; background: linear-gradient(110deg, transparent 30%, rgba(255, 215, 0, 0.6) 45%, transparent 60%); background-size: 200% 100%; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: gold-shimmer 4s linear infinite; }
-        @keyframes gold-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .card-icon { font-size: 22px; width: 28px; text-align: center; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
-        .card-content { flex-grow: 1; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0px; }
-        .card-title { font-family: var(--font-title); font-size: 17px; font-weight: 700; letter-spacing: 0.5px; }
-        .card-desc { font-size: 11px; color: #ccc; line-height: 1.2; margin-top: 2px; }
-        .card-prices { text-align: right; display: flex; flex-direction: column; justify-content: center; min-width: 65px; }
-        .price-rub { font-size: 14px; font-weight: 700; color: var(--rub-color); }
-        .price-stars { font-size: 10px; font-weight: 600; color: var(--stars-text-color); margin-top: 2px; padding: 2px 5px; background: rgba(255, 215, 0, 0.1); border-radius: 8px; display: inline-block; align-self: flex-end; }
+        /* --- UI (COMPACT) --- */
+        .app-container { position: relative; z-index: 10; padding: 12px; max-width: 380px; margin: 0 auto; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+        .header { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+        .logo-wrap { width: 64px; height: 64px; border-radius: 50%; margin-bottom: 8px; border: 1px solid rgba(166,124,82,0.4); background: #050510; box-shadow: 0 0 20px rgba(166,124,82,0.15); animation: breathe 6s infinite ease-in-out; padding: 3px; }
+        .logo-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        @keyframes breathe { 0%, 100% { box-shadow: 0 0 10px rgba(166,124,82,0.1); transform: scale(1); } 50% { box-shadow: 0 0 25px rgba(166,124,82,0.3); transform: scale(1.05); } }
 
-        .footer { position: relative; z-index: 20; padding: 12px 16px 20px 16px; background: rgba(5, 5, 16, 0.85); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 8px; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-family: var(--font-btn); font-size: 14px; font-weight: 700; cursor: pointer; transition: transform 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; position: relative; overflow: hidden; letter-spacing: 0.5px; }
+        .app-title { font-family: var(--font-title); font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; background: linear-gradient(120deg, #a67c52 0%, #ffd700 20%, #fff 50%, #ffd700 80%, #a67c52 100%); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: gold-text 12s linear infinite; text-shadow: 0 2px 10px rgba(0,0,0,0.8); margin-bottom: 2px; }
+        @keyframes gold-text { to { background-position: 200% center; } }
+        .app-desc { color: #999; font-size: 12px; letter-spacing: 1px; }
+
+        .plans-grid { display: flex; flex-direction: column; gap: 8px; }
+        .card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 10px 14px; cursor: pointer; position: relative; overflow: hidden; display: flex; align-items: center; gap: 10px; transition: transform 0.2s, background 0.3s; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        .card.active { background: rgba(166,124,82,0.15); border-color: rgba(166,124,82,0.3); box-shadow: 0 0 20px rgba(166,124,82,0.1); }
+        .card.active::before { content: ''; position: absolute; inset: 0; padding: 1px; border-radius: 14px; background: linear-gradient(110deg, transparent 30%, rgba(255,215,0,0.6) 45%, transparent 60%); background-size: 200% 100%; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: border-loop 4s linear infinite; }
+        @keyframes border-loop { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        .c-icon { font-size: 22px; width: 28px; text-align: center; }
+        .c-info { flex-grow: 1; }
+        .c-title { font-family: var(--font-title); font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+        .c-desc { font-size: 11px; color: #ccc; line-height: 1.2; }
+        .c-price { text-align: right; min-width: 65px; }
+        .p-rub { font-size: 14px; font-weight: 700; color: #fff; }
+        .p-stars { font-size: 10px; font-weight: 600; color: #FFD700; background: rgba(255,215,0,0.1); padding: 2px 5px; border-radius: 6px; margin-top: 2px; display: inline-block; }
+
+        .footer { position: relative; z-index: 20; padding: 12px 16px 24px; background: rgba(5,5,16,0.9); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 8px; }
+        .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-family: var(--font-main); font-size: 14px; font-weight: 700; cursor: pointer; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn:active { transform: scale(0.98); }
-        .btn-rub { background: #ffffff; color: #050510; box-shadow: 0 0 15px rgba(255, 255, 255, 0.15); }
-        .btn-rub::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.8), transparent); transform: skewX(-25deg); animation: shimmer-btn 6s infinite; }
-        @keyframes shimmer-btn { 0%, 90% { left: -100%; opacity: 0; } 95% { opacity: 0.5; } 100% { left: 200%; opacity: 0; } }
-        .btn-stars { background: rgba(255, 215, 0, 0.05); color: #FFD700; border: 1px solid rgba(255, 215, 0, 0.3); }
-        
+        .btn-main { background: #fff; color: #000; box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+        .btn-main::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to right, transparent, rgba(255,255,255,0.8), transparent); transform: skewX(-25deg) translateX(-150%); animation: shine-btn 6s infinite; }
+        @keyframes shine-btn { 0%, 90% { transform: skewX(-25deg) translateX(-150%); } 100% { transform: skewX(-25deg) translateX(250%); } }
+        .btn-sec { background: rgba(255,215,0,0.05); color: #FFD700; border: 1px solid rgba(255,215,0,0.3); }
+
     </style>
 </head>
 <body>
 
-    <div id="effect-galaxy" class="effects-layer active">
+    <div id="fx-galaxy" class="effects-layer active">
         <div class="galaxy-wrapper">
-            <div class="galaxy-core"></div>
-            <div class="galaxy-container" id="galaxy-container"></div>
+            <div class="galaxy-spinner" id="galaxy-spinner"><div class="galaxy-core"></div></div>
         </div>
     </div>
-
-    <div id="effect-orbit" class="effects-layer">
-        <div class="orbit-ring orbit-1"><div class="planet-dot"></div></div>
-        <div class="orbit-ring orbit-2"></div>
+    <div id="fx-orbit" class="effects-layer">
+        <div class="orbit-ring o1"><div class="planet"></div></div>
+        <div class="orbit-ring o2"></div>
     </div>
-    <div id="effect-meteor" class="effects-layer">
-        <div class="shooting-stars-container">
-            <div class="shooting-star"></div>
-            <div class="shooting-star"></div>
-            <div class="shooting-star"></div>
-            <div class="shooting-star"></div>
-            <div class="shooting-star"></div>
-            <div class="shooting-star"></div>
-            <div class="shooting-star"></div>
-        </div>
+    <div id="fx-meteor" class="effects-layer">
+        <div class="meteors-wrap" id="meteors-wrap"></div>
     </div>
 
     <div class="nebula-container">
-        <div class="nebula nebula-1"></div>
-        <div class="nebula nebula-2"></div>
+        <div class="nebula n1"></div>
+        <div class="nebula n2"></div>
     </div>
-    
-    <div class="stars-static" id="stars"></div>
+    <div class="stars-bg" id="stars-bg"></div>
 
-    <div class="container">
-        <div class="brand-header">
-            <div class="logo-container">
+    <div class="app-container">
+        <div class="header">
+            <div class="logo-wrap">
                 <img src="logo.png" alt="Logo" class="logo-img">
             </div>
-            <div class="brand-name">Astro Intelligence</div>
-            <div class="page-subtitle">Доступ к энергиям космоса</div>
+            <div class="app-title">Astro Intelligence</div>
+            <div class="app-desc">Доступ к энергиям космоса</div>
         </div>
 
-        <div class="plans">
-            <div class="card active" onclick="selectPlan('month')" id="card-month">
-                <div class="card-icon">🌌</div>
-                <div class="card-content">
-                    <div class="card-header"><div class="card-title">Галактика</div></div>
-                    <div class="card-desc">Полный доступ на 30 дней. Максимальная выгода.</div>
+        <div class="plans-grid">
+            <div class="card active" onclick="setPlan('month')" id="c-month">
+                <div class="c-icon">🌌</div>
+                <div class="c-info">
+                    <div class="c-title">Галактика</div>
+                    <div class="c-desc">30 дней доступа. Максимальная выгода.</div>
                 </div>
-                <div class="card-prices">
-                    <div class="price-rub">349 ₽</div>
-                    <div class="price-stars">250 ⭐️</div>
-                </div>
-            </div>
-
-            <div class="card" onclick="selectPlan('week')" id="card-week">
-                <div class="card-icon">🪐</div>
-                <div class="card-content">
-                    <div class="card-header"><div class="card-title">Орбита</div></div>
-                    <div class="card-desc">Доступ на 7 дней. Недельный цикл планет.</div>
-                </div>
-                <div class="card-prices">
-                    <div class="price-rub">199 ₽</div>
-                    <div class="price-stars">150 ⭐️</div>
+                <div class="c-price">
+                    <div class="p-rub">349 ₽</div>
+                    <div class="p-stars">250 ⭐️</div>
                 </div>
             </div>
 
-            <div class="card" onclick="selectPlan('day')" id="card-day">
-                <div class="card-icon">☄️</div>
-                <div class="card-content">
-                    <div class="card-header"><div class="card-title">Метеор</div></div>
-                    <div class="card-desc">Доступ на 24 часа. Импульс энергии.</div>
+            <div class="card" onclick="setPlan('week')" id="c-week">
+                <div class="c-icon">🪐</div>
+                <div class="c-info">
+                    <div class="c-title">Орбита</div>
+                    <div class="c-desc">7 дней доступа. Недельный цикл.</div>
                 </div>
-                <div class="card-prices">
-                    <div class="price-rub">99 ₽</div>
-                    <div class="price-stars">75 ⭐️</div>
+                <div class="c-price">
+                    <div class="p-rub">199 ₽</div>
+                    <div class="p-stars">150 ⭐️</div>
+                </div>
+            </div>
+
+            <div class="card" onclick="setPlan('day')" id="c-day">
+                <div class="c-icon">☄️</div>
+                <div class="c-info">
+                    <div class="c-title">Метеор</div>
+                    <div class="c-desc">24 часа доступа. Импульс энергии.</div>
+                </div>
+                <div class="c-price">
+                    <div class="p-rub">99 ₽</div>
+                    <div class="p-stars">75 ⭐️</div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="footer">
-        <button class="btn btn-rub" onclick="payRub()">
-            <span>💳</span> Оплатить картой РФ
+        <button class="btn btn-main" onclick="sendPay('rub')">
+            <span>💳</span> Картой РФ
         </button>
-        <button class="btn btn-stars" onclick="payStars()">
+        <button class="btn btn-sec" onclick="sendPay('stars')">
             <span>⭐️</span> Telegram Stars
         </button>
     </div>
@@ -273,84 +198,106 @@
         const tg = window.Telegram.WebApp;
         tg.expand(); 
 
-        const starsContainer = document.getElementById('stars');
-        for (let i = 0; i < 120; i++) {
-            const star = document.createElement('div');
-            star.className = 'star';
-            star.style.left = Math.random() * 100 + '%';
-            star.style.top = Math.random() * 100 + '%';
-            star.style.width = Math.random() * 2 + 1 + 'px';
-            star.style.height = star.style.width;
-            star.style.setProperty('--duration', Math.random() * 3 + 2 + 's');
-            star.style.animationDelay = Math.random() * 5 + 's';
-            star.style.setProperty('--opacity', Math.random() * 0.5 + 0.2);
-            starsContainer.appendChild(star);
-        }
-
-        // [NEW] ГАЛАКТИКА V2 (Цветные звезды)
-        const galaxyContainer = document.getElementById('galaxy-container');
-        const numArms = 3;
-        const starsPerArm = 60; // Больше звезд для плотности
+        // --- ГЕНЕРАЦИЯ (ОПТИМИЗИРОВАННАЯ) ---
         
-        // Палитра звезд
-        const starColors = ['#ffffff', '#a0c4ff', '#ffd700', '#ffcc00', '#b5179e'];
-
-        for (let arm = 0; arm < numArms; arm++) {
-            for (let i = 0; i < starsPerArm; i++) {
-                const star = document.createElement('div');
-                star.className = 'galaxy-star';
+        // 1. Галактика
+        const galaxySpinner = document.getElementById('galaxy-spinner');
+        const colors = ['#fff', '#a0c4ff', '#ffd700', '#b5179e'];
+        const fragGalaxy = document.createDocumentFragment();
+        
+        for (let arm = 0; arm < 3; arm++) {
+            for (let i = 0; i < 50; i++) {
+                const el = document.createElement('div');
+                el.className = 'g-star';
+                const t = i / 50;
+                const r = t * 130 + 25; 
+                const angle = t * Math.PI * 4 + (arm * Math.PI * 2 / 3);
+                const scatter = (Math.random() - 0.5) * 15 * t;
+                const x = Math.cos(angle) * r + 150 + scatter;
+                const y = Math.sin(angle) * r + 150 + scatter;
+                const size = Math.random() * 2 + 1;
+                const color = colors[Math.floor(Math.random() * colors.length)];
                 
-                // Спиральная математика
-                const t = i / starsPerArm;
-                const r = t * 140 + 20; // Радиус
-                const angle = t * Math.PI * 2 * 2 + (arm * Math.PI * 2 / numArms);
-                
-                const x = Math.cos(angle) * r + 150; // +150 для центра (300/2)
-                const y = Math.sin(angle) * r + 150;
-                
-                // Рандомный разброс (чем дальше от центра, тем сильнее)
-                const scatter = (Math.random() - 0.5) * 20 * t;
-                
-                const size = Math.random() * 2.5 + 1;
-                const color = starColors[Math.floor(Math.random() * starColors.length)];
-
-                star.style.width = size + 'px';
-                star.style.height = size + 'px';
-                star.style.left = (x + scatter) + 'px';
-                star.style.top = (y + scatter) + 'px';
-                star.style.backgroundColor = color;
-                star.style.color = color; // Для box-shadow
-                
-                galaxyContainer.appendChild(star);
+                // Используем cssText для одного обращения к DOM
+                el.style.cssText = `width:${size}px; height:${size}px; transform:translate3d(${x}px,${y}px,0); background-color:${color}; color:${color}`;
+                fragGalaxy.appendChild(el);
             }
         }
+        galaxySpinner.appendChild(fragGalaxy);
 
-        let selectedPlan = 'month';
+        // 2. Метеоры
+        const meteorWrap = document.getElementById('meteors-wrap');
+        const fragMeteors = document.createDocumentFragment();
+        const mPos = [
+            {t:'20%', l:'20%', w:150, d:0, dur:4}, {t:'50%', l:'50%', w:200, d:2, dur:3},
+            {t:'30%', l:'70%', w:120, d:1.2, dur:5}, {t:'70%', l:'30%', w:180, d:3, dur:3.5},
+            {t:'10%', l:'90%', w:160, d:0.5, dur:4.5}, {t:'80%', l:'10%', w:220, d:2.5, dur:4},
+            {t:'60%', l:'60%', w:140, d:1.8, dur:3.2}
+        ];
+        mPos.forEach(p => {
+            const m = document.createElement('div');
+            m.className = 'meteor';
+            m.style.cssText = `top:${p.t}; left:${p.l}; width:${p.w}px; animation-delay:${p.d}s; animation-duration:${p.dur}s`;
+            fragMeteors.appendChild(m);
+        });
+        meteorWrap.appendChild(fragMeteors);
 
-        function selectPlan(plan) {
-            selectedPlan = plan;
-            document.querySelectorAll('.card').forEach(el => el.classList.remove('active'));
-            document.getElementById('card-' + plan).classList.add('active');
+        // 3. Фон звезд
+        const starsWrap = document.getElementById('stars-bg');
+        const fragStars = document.createDocumentFragment();
+        for(let i=0; i<80; i++) {
+            const s = document.createElement('div');
+            s.className = 's-point';
+            const left = Math.random()*100;
+            const top = Math.random()*100;
+            const sz = Math.random()*2 + 1;
+            const dur = Math.random()*3+2;
+            const op = Math.random()*0.7+0.3;
+            s.style.cssText = `left:${left}%; top:${top}%; width:${sz}px; height:${sz}px; --d:${dur}s; --o:${op}`;
+            fragStars.appendChild(s);
+        }
+        starsWrap.appendChild(fragStars);
+
+        // --- ЛОГИКА (DOM CACHED) ---
+        
+        let activePlan = 'month';
+        
+        // КЕШИРУЕМ ЭЛЕМЕНТЫ, чтобы не искать их при каждом клике
+        const DOM = {
+            cards: {
+                month: document.getElementById('c-month'),
+                week: document.getElementById('c-week'),
+                day: document.getElementById('c-day')
+            },
+            effects: {
+                month: document.getElementById('fx-galaxy'),
+                week: document.getElementById('fx-orbit'),
+                day: document.getElementById('fx-meteor')
+            }
+        };
+
+        function setPlan(plan) {
+            if(activePlan === plan) return;
             
-            document.querySelectorAll('.effects-layer').forEach(el => el.classList.remove('active'));
-            if (plan === 'month') document.getElementById('effect-galaxy').classList.add('active');
-            else if (plan === 'week') document.getElementById('effect-orbit').classList.add('active');
-            else if (plan === 'day') document.getElementById('effect-meteor').classList.add('active');
+            // 1. Выключаем старое (прямой доступ)
+            DOM.cards[activePlan].classList.remove('active');
+            DOM.effects[activePlan].classList.remove('active');
 
-            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+            // 2. Включаем новое
+            DOM.cards[plan].classList.add('active');
+            DOM.effects[plan].classList.add('active');
+
+            // 3. Обновляем состояние
+            activePlan = plan;
+
+            if(tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
         }
 
-        function payRub() {
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            const data = JSON.stringify({ method: "rub", plan: selectedPlan });
-            tg.sendData(data);
+        function sendPay(method) {
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            tg.sendData(JSON.stringify({ method, plan: activePlan }));
         }
 
-        function payStars() {
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            const data = JSON.stringify({ method: "stars", plan: selectedPlan });
-            tg.sendData(data);
-        }
     </script>
 </body>
 </html>
