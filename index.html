@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Astro Intelligence Access</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #050510;
+            --card-bg: rgba(20, 20, 40, 0.6);
+            --accent-color: #a67c52; /* Gold/Bronze */
+            --highlight: #ffffff;
+            --star-color: #fff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #050510 0%, #1a1a2e 100%);
+            color: var(--highlight);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Анимация звезд */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration) infinite ease-in-out;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            flex-grow: 1;
+        }
+
+        h1 {
+            text-align: center;
+            font-weight: 300;
+            margin-bottom: 5px;
+            font-size: 24px;
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .plans {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card.active {
+            border-color: var(--accent-color);
+            background: rgba(166, 124, 82, 0.15);
+            box-shadow: 0 0 20px rgba(166, 124, 82, 0.2);
+        }
+
+        .card-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .card-desc {
+            font-size: 13px;
+            color: #ccc;
+            margin-bottom: 15px;
+        }
+
+        .card-prices {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .price-stars {
+            color: #FFD700; /* Gold for stars */
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .price-rub {
+            color: #fff;
+        }
+
+        .footer {
+            position: sticky;
+            bottom: 0;
+            background: rgba(5, 5, 16, 0.9);
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-rub {
+            background: white;
+            color: black;
+        }
+
+        .btn-stars {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: black;
+        }
+
+        /* Декоративные элементы */
+        .orbit {
+            position: absolute;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="stars" id="stars"></div>
+
+    <div class="container">
+        <h1>Доступ к Энергиям</h1>
+        <div class="subtitle">Выбери свой ритм взаимодействия со Вселенной</div>
+
+        <div class="plans">
+            <div class="card" onclick="selectPlan('day')" id="card-day">
+                <div class="card-icon">☄️</div>
+                <div class="card-title">Метеор</div>
+                <div class="card-desc">Импульс энергии на 24 часа. Идеально для пробы.</div>
+                <div class="card-prices">
+                    <div class="price-rub">99 ₽</div>
+                    <div class="price-stars">75 ⭐️</div>
+                </div>
+            </div>
+
+            <div class="card active" onclick="selectPlan('week')" id="card-week">
+                <div class="card-icon">🪐</div>
+                <div class="card-title">Орбита</div>
+                <div class="card-desc">Недельный цикл. Настройся на ритмы планет.</div>
+                <div class="card-prices">
+                    <div class="price-rub">199 ₽</div>
+                    <div class="price-stars">150 ⭐️</div>
+                </div>
+            </div>
+
+            <div class="card" onclick="selectPlan('month')" id="card-month">
+                <div class="card-icon">🌌</div>
+                <div class="card-title">Галактика</div>
+                <div class="card-desc">Полное погружение на месяц. Максимальная глубина.</div>
+                <div class="card-prices">
+                    <div class="price-rub">349 ₽</div>
+                    <div class="price-stars">250 ⭐️</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <button class="btn btn-rub" onclick="payRub()">
+            Оплатить карту (СБП)
+        </button>
+        <button class="btn btn-stars" onclick="payStars()">
+            Оплатить Telegram Stars ⭐️
+        </button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Генерация звезд
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 50; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const x = Math.random() * 100;
+            const y = Math.random() * 100;
+            const size = Math.random() * 2 + 1;
+            const duration = Math.random() * 3 + 2;
+            
+            star.style.left = x + '%';
+            star.style.top = y + '%';
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            star.style.setProperty('--duration', duration + 's');
+            
+            starsContainer.appendChild(star);
+        }
+
+        let selectedPlan = 'week';
+
+        function selectPlan(plan) {
+            selectedPlan = plan;
+            
+            document.querySelectorAll('.card').forEach(el => el.classList.remove('active'));
+            document.getElementById('card-' + plan).classList.add('active');
+            
+            tg.HapticFeedback.selectionChanged();
+        }
+
+        function payRub() {
+            const data = JSON.stringify({
+                method: "rub",
+                plan: selectedPlan
+            });
+            tg.sendData(data);
+        }
+
+        function payStars() {
+            const data = JSON.stringify({
+                method: "stars",
+                plan: selectedPlan
+            });
+            tg.sendData(data);
+        }
+    </script>
+</body>
+</html>
