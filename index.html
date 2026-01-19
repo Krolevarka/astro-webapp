@@ -25,9 +25,9 @@
         body {
             margin: 0;
             padding: 0;
-            background: linear-gradient(-45deg, #050510, #181830, #2a1b3d, #050510);
+            background: linear-gradient(-45deg, #020205, #0a0a1a, #150a25, #050510);
             background-size: 400% 400%;
-            animation: gradient-flow 25s ease infinite;
+            animation: gradient-flow 30s ease infinite;
             color: var(--highlight);
             font-family: var(--font-body);
             overflow: hidden;
@@ -35,7 +35,7 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            perspective: 1000px;
+            perspective: 800px; /* Усилили перспективу для 3D эффекта */
         }
 
         @keyframes gradient-flow {
@@ -44,25 +44,89 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* --- ЭФФЕКТЫ --- */
-        .nebula-container { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; opacity: 0.3; }
-        .nebula { position: absolute; border-radius: 50%; filter: blur(90px); }
-        .nebula-1 { top: -20%; left: -20%; width: 70%; height: 70%; background: radial-gradient(circle, rgba(120, 60, 220, 0.25), transparent 70%); animation: float-nebula 30s infinite alternate ease-in-out; }
-        .nebula-2 { bottom: -30%; right: -30%; width: 80%; height: 80%; background: radial-gradient(circle, rgba(60, 120, 250, 0.2), transparent 70%); animation: float-nebula 40s infinite alternate-reverse ease-in-out; }
+        /* --- СЛОЙ ТУМАННОСТИ --- */
+        .nebula-container { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; opacity: 0.25; }
+        .nebula { position: absolute; border-radius: 50%; filter: blur(80px); }
+        .nebula-1 { top: -20%; left: -20%; width: 60%; height: 60%; background: radial-gradient(circle, rgba(100, 50, 200, 0.3), transparent 70%); animation: float-nebula 30s infinite alternate ease-in-out; }
+        .nebula-2 { bottom: -30%; right: -30%; width: 70%; height: 70%; background: radial-gradient(circle, rgba(50, 100, 250, 0.2), transparent 70%); animation: float-nebula 40s infinite alternate-reverse ease-in-out; }
         @keyframes float-nebula { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(5%, 2%) scale(1.05); } }
 
-        .effects-layer { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; transition: opacity 1.5s ease-in-out; opacity: 0; }
-        .effects-layer.active { opacity: 0.8; }
+        /* --- ЭФФЕКТЫ --- */
+        .effects-layer {
+            position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;
+            transition: opacity 1.5s ease-in-out; opacity: 0;
+            /* Центрируем содержимое для 3D трансформаций */
+            display: flex; align-items: center; justify-content: center;
+            transform-style: preserve-3d;
+        }
+        .effects-layer.active { opacity: 1; }
 
-        /* Галактика */
-        .galaxy-spiral { position: absolute; top: 50%; left: 50%; width: 140vw; height: 140vw; transform: translate(-50%, -50%); background: repeating-conic-gradient(from 0deg, transparent 0deg, rgba(100, 50, 200, 0.08) 10deg, transparent 20deg, rgba(166, 124, 82, 0.05) 30deg, transparent 40deg); border-radius: 50%; animation: rotate-galaxy 120s linear infinite; filter: blur(40px); }
-        @keyframes rotate-galaxy { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+        /* [NEW] ГАЛАКТИКА V2: 3D ДИСК С ЧЕРНОЙ ДЫРОЙ */
+        .galaxy-wrapper {
+            position: relative;
+            width: 300px; height: 300px;
+            /* Наклоняем галактику в пространстве */
+            transform: rotateX(65deg);
+            transform-style: preserve-3d;
+        }
+
+        .galaxy-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            transform-style: preserve-3d;
+            animation: rotate-galaxy 40s linear infinite;
+        }
+
+        .galaxy-star {
+            position: absolute;
+            border-radius: 50%;
+            /* Свечение звезды зависит от ее цвета (задается в JS) */
+            box-shadow: 0 0 6px currentColor; 
+        }
+
+        /* Черная дыра (Ядро) */
+        .galaxy-core {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotateX(-65deg); /* Компенсируем наклон, чтобы дыра смотрела на нас, или оставляем плоской? Оставим плоской в плоскости галактики */
+            width: 40px; height: 40px;
+            background: #000; /* Сама дыра черная */
+            border-radius: 50%;
+            z-index: 5;
+            /* Аккреционный диск (свечение вокруг) */
+            box-shadow: 
+                0 0 10px 2px rgba(255, 200, 100, 0.8), /* Внутреннее кольцо (золото) */
+                0 0 30px 10px rgba(100, 100, 255, 0.4), /* Внешнее гало (синий) */
+                0 0 60px 20px rgba(255, 255, 255, 0.2); /* Дальний свет */
+        }
+        
+        /* Джеты (Лучи энергии из центра) - Опционально, но красиво */
+        .galaxy-core::after {
+            content: ''; position: absolute;
+            top: 50%; left: 50%;
+            width: 100px; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+            transform: translate(-50%, -50%) rotate(90deg);
+            filter: blur(4px);
+            opacity: 0.6;
+            animation: pulse-jet 3s ease-in-out infinite;
+        }
+
+        @keyframes rotate-galaxy {
+            from { transform: rotateZ(0deg); }
+            to { transform: rotateZ(360deg); }
+        }
+        
+        @keyframes pulse-jet {
+            0%, 100% { opacity: 0.4; height: 1px; }
+            50% { opacity: 0.7; height: 4px; }
+        }
 
         /* Орбиты */
-        .orbit-ring { position: absolute; top: 50%; left: 50%; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 50%; transform: translate(-50%, -50%); }
-        .orbit-1 { width: 300px; height: 300px; animation: rotate-orbit 30s linear infinite; }
-        .orbit-2 { width: 500px; height: 500px; animation: rotate-orbit 50s linear infinite reverse; border-color: rgba(166, 124, 82, 0.08); }
-        .planet-dot { position: absolute; top: 50%; left: 100%; width: 6px; height: 6px; background: #fff; border-radius: 50%; box-shadow: 0 0 8px #fff; transform: translate(-50%, -50%); }
+        .orbit-ring { position: absolute; top: 50%; left: 50%; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 50%; transform: translate(-50%, -50%); }
+        .orbit-1 { width: 280px; height: 280px; animation: rotate-orbit 30s linear infinite; }
+        .orbit-2 { width: 450px; height: 450px; animation: rotate-orbit 50s linear infinite reverse; border-color: rgba(166, 124, 82, 0.2); }
+        .planet-dot { position: absolute; top: 50%; left: 100%; width: 8px; height: 8px; background: #fff; border-radius: 50%; box-shadow: 0 0 10px #fff; transform: translate(-50%, -50%); }
         @keyframes rotate-orbit { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
 
         /* Метеоры */
@@ -77,95 +141,26 @@
         .shooting-star:nth-child(7) { top: 60%; left: 60%; width: 140px; animation-delay: 1.8s; animation-duration: 3.2s; }
         @keyframes shooting-fly { 0% { transform: translateX(-150vh); opacity: 0; } 5% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(150vh); opacity: 0; } }
 
+        /* Звезды (Статика) */
         .stars-container-parallax { position: fixed; inset: -5%; width: 110%; height: 110%; pointer-events: none; z-index: 2; transition: transform 0.1s ease-out; }
         .star { position: absolute; background: white; border-radius: 50%; opacity: 0; animation: twinkle var(--duration) infinite ease-in-out; }
         @keyframes twinkle { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: var(--opacity); transform: scale(1); } 100% { opacity: 0; transform: scale(0.5); } }
 
-        /* --- UI COMPACT MODE --- */
-        .container {
-            position: relative;
-            z-index: 10;
-            padding: 12px; /* Уменьшили отступы */
-            max-width: 380px; /* Сузили контейнер для компактности */
-            margin: 0 auto;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .brand-header {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px; /* Было 25 */
-        }
-
-        .logo-container {
-            width: 64px; height: 64px; /* Было 80 */
-            border-radius: 50%;
-            margin-bottom: 8px; /* Было 12 */
-            border: 1px solid rgba(166, 124, 82, 0.4);
-            background: #050510;
-            box-shadow: 0 0 20px rgba(166, 124, 82, 0.15);
-            animation: breathe 6s infinite ease-in-out;
-            padding: 3px;
-            position: relative;
-            z-index: 20; 
-        }
+        /* --- UI --- */
+        .container { position: relative; z-index: 10; padding: 12px; max-width: 380px; margin: 0 auto; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+        .brand-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+        .logo-container { width: 64px; height: 64px; border-radius: 50%; margin-bottom: 8px; border: 1px solid rgba(166, 124, 82, 0.4); background: #050510; box-shadow: 0 0 20px rgba(166, 124, 82, 0.15); animation: breathe 6s infinite ease-in-out; padding: 3px; position: relative; z-index: 20; }
         .logo-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; background: #050510; }
         @keyframes breathe { 0%, 100% { box-shadow: 0 0 10px rgba(166, 124, 82, 0.1); transform: scale(1); } 50% { box-shadow: 0 0 20px rgba(166, 124, 82, 0.3); transform: scale(1.02); } }
-
-        .brand-name {
-            font-family: var(--font-title);
-            font-size: 20px; /* Было 26 */
-            font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
-            background: linear-gradient(120deg, #a67c52 0%, #d4af37 20%, #fcf6ba 45%, #ffffff 50%, #fcf6ba 55%, #d4af37 80%, #a67c52 100%);
-            background-size: 200% auto;
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            animation: shine 12s linear infinite;
-            margin-bottom: 2px; text-align: center;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-        }
+        .brand-name { font-family: var(--font-title); font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; background: linear-gradient(120deg, #a67c52 0%, #d4af37 20%, #fcf6ba 45%, #ffffff 50%, #fcf6ba 55%, #d4af37 80%, #a67c52 100%); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 12s linear infinite; margin-bottom: 2px; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
         @keyframes shine { to { background-position: 200% center; } }
-
         .page-subtitle { text-align: center; color: #999; font-size: 12px; font-weight: 400; text-shadow: 0 1px 5px rgba(0,0,0,0.8); letter-spacing: 1px; }
-
-        .plans { display: flex; flex-direction: column; gap: 8px; /* Было 12 */ }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 14px;
-            padding: 10px 14px; /* Компактные отступы */
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            position: relative;
-            display: flex; align-items: center; gap: 10px;
-            overflow: hidden;
-        }
-
-        .card.active {
-            background: rgba(166, 124, 82, 0.15);
-            box-shadow: 0 0 25px rgba(166, 124, 82, 0.1);
-            border-color: rgba(166, 124, 82, 0.3);
-        }
-
-        .card.active::before {
-            content: ''; position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border-radius: 14px;
-            padding: 1px;
-            background: linear-gradient(110deg, transparent 30%, rgba(255, 215, 0, 0.6) 45%, transparent 60%);
-            background-size: 200% 100%;
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            animation: gold-shimmer 4s linear infinite;
-        }
+        
+        .plans { display: flex; flex-direction: column; gap: 8px; }
+        .card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 14px; padding: 10px 14px; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); position: relative; display: flex; align-items: center; gap: 10px; overflow: hidden; }
+        .card.active { background: rgba(166, 124, 82, 0.15); box-shadow: 0 0 25px rgba(166, 124, 82, 0.1); border-color: rgba(166, 124, 82, 0.3); }
+        .card.active::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 14px; padding: 1px; background: linear-gradient(110deg, transparent 30%, rgba(255, 215, 0, 0.6) 45%, transparent 60%); background-size: 200% 100%; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: gold-shimmer 4s linear infinite; }
         @keyframes gold-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
         .card-icon { font-size: 22px; width: 28px; text-align: center; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
         .card-content { flex-grow: 1; }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0px; }
@@ -175,35 +170,12 @@
         .price-rub { font-size: 14px; font-weight: 700; color: var(--rub-color); }
         .price-stars { font-size: 10px; font-weight: 600; color: var(--stars-text-color); margin-top: 2px; padding: 2px 5px; background: rgba(255, 215, 0, 0.1); border-radius: 8px; display: inline-block; align-self: flex-end; }
 
-        .footer {
-            position: relative; z-index: 20; 
-            padding: 12px 16px 20px 16px; /* Компактнее */
-            background: rgba(5, 5, 16, 0.85); backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255,255,255,0.05);
-            display: flex; flex-direction: column; gap: 8px;
-        }
-
-        .btn {
-            width: 100%; 
-            padding: 14px; /* Было 18 */
-            border: none; border-radius: 12px;
-            font-family: var(--font-btn); 
-            font-size: 14px; /* Было 16 */
-            font-weight: 700;
-            cursor: pointer; transition: transform 0.2s;
-            display: flex; justify-content: center; align-items: center; gap: 8px;
-            position: relative; overflow: hidden; letter-spacing: 0.5px;
-        }
+        .footer { position: relative; z-index: 20; padding: 12px 16px 20px 16px; background: rgba(5, 5, 16, 0.85); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 8px; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-family: var(--font-btn); font-size: 14px; font-weight: 700; cursor: pointer; transition: transform 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; position: relative; overflow: hidden; letter-spacing: 0.5px; }
         .btn:active { transform: scale(0.98); }
-
         .btn-rub { background: #ffffff; color: #050510; box-shadow: 0 0 15px rgba(255, 255, 255, 0.15); }
-        .btn-rub::after {
-            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
-            background: linear-gradient(to right, transparent, rgba(255,255,255,0.8), transparent);
-            transform: skewX(-25deg); animation: shimmer-btn 6s infinite;
-        }
+        .btn-rub::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.8), transparent); transform: skewX(-25deg); animation: shimmer-btn 6s infinite; }
         @keyframes shimmer-btn { 0%, 90% { left: -100%; opacity: 0; } 95% { opacity: 0.5; } 100% { left: 200%; opacity: 0; } }
-
         .btn-stars { background: rgba(255, 215, 0, 0.05); color: #FFD700; border: 1px solid rgba(255, 215, 0, 0.3); }
         
     </style>
@@ -211,9 +183,12 @@
 <body>
 
     <div id="effect-galaxy" class="effects-layer active">
-        <div class="galaxy-spiral"></div>
-        <div class="galaxy-core"></div>
+        <div class="galaxy-wrapper">
+            <div class="galaxy-core"></div>
+            <div class="galaxy-container" id="galaxy-container"></div>
+        </div>
     </div>
+
     <div id="effect-orbit" class="effects-layer">
         <div class="orbit-ring orbit-1"><div class="planet-dot"></div></div>
         <div class="orbit-ring orbit-2"></div>
@@ -235,7 +210,7 @@
         <div class="nebula nebula-2"></div>
     </div>
     
-    <div class="stars-container-parallax" id="stars"></div>
+    <div class="stars-static" id="stars"></div>
 
     <div class="container">
         <div class="brand-header">
@@ -312,11 +287,43 @@
             starsContainer.appendChild(star);
         }
 
-        document.addEventListener('mousemove', (e) => {
-            const x = (0.5 - e.clientX / window.innerWidth) * 20;
-            const y = (0.5 - e.clientY / window.innerHeight) * 20;
-            starsContainer.style.transform = `translate(${x}px, ${y}px)`;
-        });
+        // [NEW] ГАЛАКТИКА V2 (Цветные звезды)
+        const galaxyContainer = document.getElementById('galaxy-container');
+        const numArms = 3;
+        const starsPerArm = 60; // Больше звезд для плотности
+        
+        // Палитра звезд
+        const starColors = ['#ffffff', '#a0c4ff', '#ffd700', '#ffcc00', '#b5179e'];
+
+        for (let arm = 0; arm < numArms; arm++) {
+            for (let i = 0; i < starsPerArm; i++) {
+                const star = document.createElement('div');
+                star.className = 'galaxy-star';
+                
+                // Спиральная математика
+                const t = i / starsPerArm;
+                const r = t * 140 + 20; // Радиус
+                const angle = t * Math.PI * 2 * 2 + (arm * Math.PI * 2 / numArms);
+                
+                const x = Math.cos(angle) * r + 150; // +150 для центра (300/2)
+                const y = Math.sin(angle) * r + 150;
+                
+                // Рандомный разброс (чем дальше от центра, тем сильнее)
+                const scatter = (Math.random() - 0.5) * 20 * t;
+                
+                const size = Math.random() * 2.5 + 1;
+                const color = starColors[Math.floor(Math.random() * starColors.length)];
+
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = (x + scatter) + 'px';
+                star.style.top = (y + scatter) + 'px';
+                star.style.backgroundColor = color;
+                star.style.color = color; // Для box-shadow
+                
+                galaxyContainer.appendChild(star);
+            }
+        }
 
         let selectedPlan = 'month';
 
