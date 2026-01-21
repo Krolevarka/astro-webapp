@@ -20,7 +20,14 @@
             --silver: #c0c0c0;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        /* FIX: Полное отключение системной подсветки и запрет выделения */
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent !important; 
+            outline: none !important;
+            user-select: none;
+            -webkit-user-select: none;
+        }
 
         body {
             margin: 0; padding: 0;
@@ -60,37 +67,30 @@
             100% { opacity: 0.8; transform: scale(1.05); } 
         }
 
-        /* --- EFFECTS CONTAINER ANIMATION LOGIC --- */
+        /* Effects Container */
         .effects-layer {
             position: fixed; inset: 0; pointer-events: none; z-index: 2;
             display: none; 
-            
-            /* Default Hidden State */
             opacity: 0;
             filter: blur(15px); 
             transform: scale(1.15); 
-            
             align-items: center; justify-content: center;
             transform-style: preserve-3d;
             perspective: 800px;
             will-change: opacity, transform, filter;
-            
-            /* General Smooth Transition for ENTRY */
             transition: opacity 0.7s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.7s ease;
         }
 
-        /* SPECIAL OVERRIDE FOR ORBIT EXIT (Smoother Zoom Out) */
         #fx-orbit:not(.visible) {
-            transform: scale(2.5); /* Hidden state is huge */
+            transform: scale(2.5); 
             opacity: 0;
-            /* Define a slower, smoother transition specifically for the EXIT phase */
             transition: opacity 0.8s ease, transform 1.5s ease-out, filter 0.8s ease;
         }
         
         .effects-layer.visible { 
             opacity: 1; 
             filter: blur(0px);
-            transform: scale(1); /* All effects settle to scale 1 */
+            transform: scale(1); 
         }
 
         /* Galaxy */
@@ -179,13 +179,19 @@
             -webkit-backdrop-filter: blur(10px);
             display: flex; align-items: center; gap: 6px;
             transition: transform 0.1s;
+            /* FIX: Запрещаем мигание фона */
+            -webkit-tap-highlight-color: transparent; 
         }
-        .info-btn:active { transform: scale(0.95); background: rgba(255, 215, 0, 0.15); }
+        
+        /* FIX: Убрали изменение фона (background), оставили только сжатие. Желтой вспышки больше не будет. */
+        .info-btn:active { 
+            transform: scale(0.95); 
+            opacity: 0.8; /* Легкое затемнение вместо смены цвета */
+        }
         .info-btn span { font-size: 12px; }
 
         .plans-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
         
-        /* CARD STYLES */
         .card { 
             background: var(--card-bg); 
             border: 1px solid rgba(255,255,255,0.05); 
@@ -198,6 +204,8 @@
             transition: background 0.3s; 
             backdrop-filter: blur(12px); 
             -webkit-backdrop-filter: blur(12px);
+            /* FIX: Изоляция слоя карточки */
+            transform: translateZ(0); 
         }
 
         .card.active { background: rgba(166,124,82,0.1); border-color: transparent; }
@@ -244,6 +252,9 @@
             display: flex; align-items: flex-end;
             opacity: 0; pointer-events: none;
             transition: opacity 0.2s;
+            /* FIX: Стабилизация слоя */
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
         }
         .modal-overlay.open { opacity: 1; pointer-events: auto; }
         
@@ -256,8 +267,15 @@
             transform: translateY(100%);
             transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
             overflow-y: auto; display: flex; flex-direction: column;
+            /* FIX: Стабилизация контента */
+            -webkit-transform: translate3d(0, 100%, 0);
+            transform: translate3d(0, 100%, 0);
+            will-change: transform;
         }
-        .modal-overlay.open .modal-content { transform: translateY(0); }
+        .modal-overlay.open .modal-content { 
+            -webkit-transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0); 
+        }
 
         .m-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .m-title { font-family: var(--font-title); font-size: 22px; color: var(--gold); }
@@ -270,7 +288,11 @@
         .th-free { color: #888; }
         .th-prem { color: var(--gold); text-shadow: 0 0 10px rgba(255,215,0,0.3); }
 
-        .t-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .t-row { 
+            display: grid; grid-template-columns: 1.2fr 1fr 1fr; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.03); 
+            /* FIX: Стабилизация строк таблицы */
+            transform: translateZ(0); 
+        }
         .t-row:nth-child(even) { background: rgba(255,255,255,0.02); }
 
         .td-feat { font-size: 11px; color: #fff; display: flex; align-items: center; gap: 6px; line-height: 1.2; font-weight: 500; }
@@ -280,7 +302,12 @@
         .v-prem { color: var(--gold); font-weight: 700; }
         .v-inf { font-size: 14px; }
 
-        .q-btn { width: 16px; height: 16px; background: rgba(255,215,0,0.1); color: var(--gold); border: 1px solid rgba(255,215,0,0.3); border-radius: 50%; font-size: 10px; font-weight: 700; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; }
+        .q-btn { 
+            width: 16px; height: 16px; background: rgba(255,215,0,0.1); color: var(--gold); border: 1px solid rgba(255,215,0,0.3); border-radius: 50%; font-size: 10px; font-weight: 700; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; 
+            /* FIX: Убрали смену цвета на активном, оставили только скейл */
+            transition: transform 0.1s;
+        }
+        .q-btn:active { transform: scale(0.9); opacity: 0.7; }
 
         .prac-list { display: flex; flex-direction: column; gap: 10px; margin-top: 5px; }
         .prac-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
