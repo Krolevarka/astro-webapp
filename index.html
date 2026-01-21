@@ -11,20 +11,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- НАСТРОЙКИ --- */
         :root {
-            --card-bg: rgba(20, 20, 35, 0.7);
-            --modal-bg: #0f0f20; /* Solid color fallback for perf */
+            --card-bg: rgba(20, 20, 35, 0.6);
+            --modal-bg: #0f0f20;
             --font-title: 'Cormorant Garamond', serif;
             --font-main: 'Montserrat', sans-serif;
             --gold: #ffd700;
+            --silver: #c0c0c0;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             margin: 0; padding: 0;
-            /* Убрали тяжелую анимацию градиента на слабых устройствах, оставили статику */
             background: #020205; 
             background: linear-gradient(-45deg, #020205, #0f0f20, #1a1025);
             color: #fff;
@@ -32,54 +31,130 @@
             overflow: hidden;
             width: 100vw; height: 100vh;
             display: flex; flex-direction: column;
-            perspective: 800px;
+            perspective: 1000px;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --- ЭФФЕКТЫ ФОНА (ОПТИМИЗИРОВАННЫЕ) --- */
-        .nebula-container { position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: 0.3; }
-        .nebula { position: absolute; border-radius: 50%; filter: blur(60px); transform: translate3d(0,0,0); will-change: transform; }
+        /* --- BACKGROUND FX --- */
+        .nebula-container { position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: 0.4; }
         
-        /* Упрощенная анимация для небул */
-        .n1 { top: -10%; left: -10%; width: 60%; height: 60%; background: radial-gradient(circle, rgba(120,60,220,0.25), transparent 70%); animation: pulse 10s infinite alternate; }
-        .n2 { bottom: -20%; right: -20%; width: 70%; height: 70%; background: radial-gradient(circle, rgba(60,120,250,0.2), transparent 70%); animation: pulse 12s infinite alternate-reverse; }
+        .nebula { 
+            position: absolute; 
+            border-radius: 50%; 
+            will-change: transform, opacity; 
+        }
         
-        @keyframes pulse { 0% { opacity: 0.5; transform: scale(1); } 100% { opacity: 0.8; transform: scale(1.05); } }
+        .n1 { 
+            top: -10%; left: -10%; width: 70%; height: 70%; 
+            background: radial-gradient(circle, rgba(120,60,220,0.3) 0%, transparent 60%); 
+            animation: pulse 10s infinite alternate; 
+        }
+        .n2 { 
+            bottom: -20%; right: -20%; width: 80%; height: 80%; 
+            background: radial-gradient(circle, rgba(60,120,250,0.25) 0%, transparent 60%); 
+            animation: pulse 12s infinite alternate-reverse; 
+        }
+        
+        @keyframes pulse { 
+            0% { opacity: 0.5; transform: scale(1); } 
+            100% { opacity: 0.8; transform: scale(1.05); } 
+        }
 
-        /* Контейнер эффектов: display:none по умолчанию для разгрузки GPU */
+        /* --- EFFECTS CONTAINER ANIMATION LOGIC --- */
         .effects-layer {
             position: fixed; inset: 0; pointer-events: none; z-index: 2;
-            display: none; /* PERFORMANCE KILL SWITCH */
+            display: none; 
+            
+            /* Default Hidden State */
+            opacity: 0;
+            filter: blur(15px); 
+            transform: scale(1.15); 
+            
             align-items: center; justify-content: center;
             transform-style: preserve-3d;
+            perspective: 800px;
+            will-change: opacity, transform, filter;
+            
+            /* General Smooth Transition for ENTRY */
+            transition: opacity 0.7s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.7s ease;
         }
-        .effects-layer.active { display: flex; }
 
-        /* Галактика */
-        .galaxy-wrapper { position: relative; width: 280px; height: 280px; transform: rotateX(65deg); transform-style: preserve-3d; }
-        .galaxy-spinner { position: absolute; inset: 0; transform-style: preserve-3d; animation: rotate-center 60s linear infinite; will-change: transform; }
-        .galaxy-core { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); background: #000; border-radius: 50%; box-shadow: 0 0 15px 2px rgba(255,200,100,0.8), 0 0 30px 5px rgba(100,100,255,0.4); }
-        .g-star { position: absolute; border-radius: 50%; box-shadow: 0 0 2px currentColor; }
+        /* SPECIAL OVERRIDE FOR ORBIT EXIT (Smoother Zoom Out) */
+        #fx-orbit:not(.visible) {
+            transform: scale(2.5); /* Hidden state is huge */
+            opacity: 0;
+            /* Define a slower, smoother transition specifically for the EXIT phase */
+            transition: opacity 0.8s ease, transform 1.5s ease-out, filter 0.8s ease;
+        }
+        
+        .effects-layer.visible { 
+            opacity: 1; 
+            filter: blur(0px);
+            transform: scale(1); /* All effects settle to scale 1 */
+        }
+
+        /* Galaxy */
+        .galaxy-wrapper { 
+            position: relative; width: 280px; height: 280px; 
+            transform: rotateX(65deg); 
+            transform-style: preserve-3d; 
+        }
+        .galaxy-spinner { 
+            position: absolute; inset: 0; 
+            transform-style: preserve-3d; 
+            animation: rotate-center 60s linear infinite; 
+            will-change: transform; 
+        }
+        .galaxy-core { 
+            position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; 
+            transform: translate(-50%, -50%); 
+            background: #000; border-radius: 50%; 
+            box-shadow: 0 0 10px 2px rgba(255,200,100,0.8), 0 0 20px 5px rgba(100,100,255,0.4); 
+        }
+        .g-star { 
+            position: absolute; border-radius: 50%; 
+            backface-visibility: hidden; 
+        }
         @keyframes rotate-center { from { transform: rotateZ(0deg); } to { transform: rotateZ(360deg); } }
 
-        /* Орбиты */
-        .orbit-ring { position: absolute; top: 50%; left: 50%; border: 1px solid rgba(255,255,255,0.15); border-radius: 50%; transform: translate(-50%, -50%); will-change: transform; }
+        /* Orbits */
+        .orbit-ring { 
+            position: absolute; top: 50%; left: 50%; 
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 50%; 
+            transform: translate(-50%, -50%); 
+            will-change: transform; 
+            backface-visibility: hidden; 
+        }
         .o1 { width: 260px; height: 260px; animation: orbit-spin 30s linear infinite; }
         .o2 { width: 400px; height: 400px; animation: orbit-spin 50s linear infinite reverse; border-color: rgba(166,124,82,0.2); }
-        .planet { position: absolute; top: 50%; left: 100%; width: 6px; height: 6px; background: #fff; border-radius: 50%; box-shadow: 0 0 8px #fff; transform: translate(-50%, -50%); }
+        .planet { 
+            position: absolute; top: 50%; left: 100%; width: 6px; height: 6px; 
+            background: #fff; border-radius: 50%; 
+            box-shadow: 0 0 5px #fff; 
+            transform: translate(-50%, -50%); 
+        }
         @keyframes orbit-spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
 
-        /* Метеоры */
+        /* Meteors */
         .meteors-wrap { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; transform: rotateZ(45deg); pointer-events: none; z-index: 1; }
-        .meteor { position: absolute; height: 2px; background: linear-gradient(-45deg, #fff, transparent); border-radius: 99px; opacity: 0; animation: meteor-fly 4s linear infinite; will-change: transform, opacity; }
+        .meteor { 
+            position: absolute; height: 2px; 
+            background: linear-gradient(-45deg, #fff, transparent); 
+            border-radius: 99px; opacity: 0; 
+            animation: meteor-fly 4s linear infinite; 
+            will-change: transform, opacity; 
+        }
         @keyframes meteor-fly { 0% { transform: translateX(-150vh); opacity: 0; } 10% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(150vh); opacity: 0; } }
 
-        /* Статичные звезды */
+        /* Static Stars */
         .stars-bg { position: fixed; inset: 0; z-index: 0; }
-        .s-point { position: absolute; background: #fff; border-radius: 50%; opacity: 0; animation: twinkle var(--d) infinite ease-in-out; will-change: opacity; }
+        .s-point { 
+            position: absolute; background: #fff; border-radius: 50%; opacity: 0; 
+            animation: twinkle var(--d) infinite ease-in-out; 
+        }
         @keyframes twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: var(--o); } }
 
-        /* --- UI (MAIN) --- */
+        /* --- UI STYLES --- */
         .app-container { position: relative; z-index: 10; padding: 12px; max-width: 380px; margin: 0 auto; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
         
         .header { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; text-align: center; }
@@ -100,8 +175,8 @@
             padding: 6px 12px;
             border-radius: 20px;
             cursor: pointer;
-            /* Blur is heavy, reduced for optimization */
-            backdrop-filter: blur(4px); 
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px);
             display: flex; align-items: center; gap: 6px;
             transition: transform 0.1s;
         }
@@ -109,10 +184,42 @@
         .info-btn span { font-size: 12px; }
 
         .plans-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-        .card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 10px 14px; cursor: pointer; position: relative; overflow: hidden; display: flex; align-items: center; gap: 10px; transition: background 0.2s; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
-        .card.active { background: rgba(166,124,82,0.15); border-color: rgba(166,124,82,0.3); }
-        /* Removed animated border for performance */
-        .card.active::before { content: ''; position: absolute; inset: 0; border-radius: 14px; border: 1px solid rgba(255,215,0,0.3); box-shadow: inset 0 0 15px rgba(255,215,0,0.1); pointer-events: none; }
+        
+        /* CARD STYLES */
+        .card { 
+            background: var(--card-bg); 
+            border: 1px solid rgba(255,255,255,0.05); 
+            border-radius: 14px; 
+            padding: 10px 14px; 
+            cursor: pointer; 
+            position: relative; 
+            overflow: hidden; 
+            display: flex; align-items: center; gap: 10px; 
+            transition: background 0.3s; 
+            backdrop-filter: blur(12px); 
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .card.active { background: rgba(166,124,82,0.1); border-color: transparent; }
+
+        .card.active::before { 
+            content: ''; position: absolute; inset: 0; padding: 1.5px; border-radius: 14px; 
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            background-size: 200% 200%;
+            animation: border-flow 4s linear infinite;
+            pointer-events: none;
+        }
+
+        #c-month.active::before { background-image: linear-gradient(110deg, transparent 30%, var(--gold) 50%, transparent 70%); }
+        #c-week.active::before, #c-day.active::before { background-image: linear-gradient(110deg, transparent 30%, var(--silver) 50%, transparent 70%); }
+
+        @keyframes border-flow { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        #c-month { padding: 16px 14px; margin-bottom: 2px; }
+        #c-month .c-title { font-size: 19px; } 
+        #c-month .c-icon { font-size: 26px; }
 
         .c-icon { font-size: 22px; width: 28px; text-align: center; }
         .c-info { flex-grow: 1; }
@@ -122,18 +229,18 @@
         .p-rub { font-size: 14px; font-weight: 700; color: #fff; }
         .p-stars { font-size: 10px; font-weight: 600; color: #FFD700; background: rgba(255,215,0,0.1); padding: 2px 5px; border-radius: 6px; margin-top: 2px; display: inline-block; }
 
-        .footer { position: relative; z-index: 20; padding: 12px 16px 24px; background: rgba(5,5,16,0.95); border-top: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 8px; }
+        .footer { position: relative; z-index: 20; padding: 12px 16px 24px; background: rgba(5,5,16,0.9); border-top: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 8px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
         .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-family: var(--font-main); font-size: 14px; font-weight: 700; cursor: pointer; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn:active { transform: scale(0.98); }
         .btn-main { background: #fff; color: #000; }
         .btn-sec { background: rgba(255,215,0,0.05); color: #FFD700; border: 1px solid rgba(255,215,0,0.3); }
 
-        /* --- MODAL --- */
+        /* --- MODALS --- */
         .modal-overlay {
             position: fixed; inset: 0; z-index: 100;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             display: flex; align-items: flex-end;
             opacity: 0; pointer-events: none;
             transition: opacity 0.2s;
@@ -141,18 +248,14 @@
         .modal-overlay.open { opacity: 1; pointer-events: auto; }
         
         .modal-content {
-            background: #15152a; /* Solid bg is faster than gradient */
+            background: #15152a; 
             background: linear-gradient(to top, #0f0f20, #1b1b35);
-            width: 100%;
-            max-height: 85vh;
-            border-radius: 20px 20px 0 0;
-            padding: 20px 16px 30px;
+            width: 100%; max-height: 85vh; border-radius: 20px 20px 0 0; padding: 20px 16px 30px;
             box-shadow: 0 -5px 30px rgba(0,0,0,0.5);
             border-top: 1px solid rgba(255,215,0,0.2);
             transform: translateY(100%);
             transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-            overflow-y: auto;
-            display: flex; flex-direction: column;
+            overflow-y: auto; display: flex; flex-direction: column;
         }
         .modal-overlay.open .modal-content { transform: translateY(0); }
 
@@ -160,94 +263,47 @@
         .m-title { font-family: var(--font-title); font-size: 22px; color: var(--gold); }
         .m-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 5px; opacity: 0.7; }
 
-        /* TABLE STYLES */
         .comp-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-        
-        .t-head {
-            display: grid; 
-            grid-template-columns: 1.2fr 1fr 1fr;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 10px;
-        }
-        .th-cell {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            text-align: center;
-        }
+        .t-head { display: grid; grid-template-columns: 1.2fr 1fr 1fr; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; }
+        .th-cell { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
         .th-feat { text-align: left; padding-left: 5px; color: #aaa; }
         .th-free { color: #888; }
         .th-prem { color: var(--gold); text-shadow: 0 0 10px rgba(255,215,0,0.3); }
 
-        .t-row {
-            display: grid; 
-            grid-template-columns: 1.2fr 1fr 1fr;
-            align-items: center;
-            padding: 10px 5px;
-            border-bottom: 1px solid rgba(255,255,255,0.03);
-        }
+        .t-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.03); }
         .t-row:nth-child(even) { background: rgba(255,255,255,0.02); }
 
-        .td-feat {
-            font-size: 11px;
-            color: #fff;
-            display: flex; align-items: center; gap: 6px;
-            line-height: 1.2;
-            font-weight: 500;
-        }
+        .td-feat { font-size: 11px; color: #fff; display: flex; align-items: center; gap: 6px; line-height: 1.2; font-weight: 500; }
         .td-icon { font-size: 14px; min-width: 18px; }
-        
-        .td-val {
-            font-size: 10px;
-            text-align: center;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            height: 100%;
-            line-height: 1.2;
-        }
+        .td-val { font-size: 10px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; line-height: 1.2; }
         .v-free { color: #777; }
         .v-prem { color: var(--gold); font-weight: 700; }
         .v-inf { font-size: 14px; }
 
-        /* QUESTION BUTTON */
-        .q-btn {
-            width: 16px; height: 16px; 
-            background: rgba(255,215,0,0.1); 
-            color: var(--gold);
-            border: 1px solid rgba(255,215,0,0.3);
-            border-radius: 50%;
-            font-size: 10px;
-            font-weight: 700;
-            display: inline-flex; justify-content: center; align-items: center;
-            cursor: pointer;
-            margin-left: 4px;
-        }
+        .q-btn { width: 16px; height: 16px; background: rgba(255,215,0,0.1); color: var(--gold); border: 1px solid rgba(255,215,0,0.3); border-radius: 50%; font-size: 10px; font-weight: 700; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; margin-left: 4px; }
 
-        /* PRACTICES LIST */
         .prac-list { display: flex; flex-direction: column; gap: 10px; margin-top: 5px; }
         .prac-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
         .pi-icon { font-size: 18px; }
         .pi-name { font-size: 13px; font-weight: 600; color: #fff; }
         .pi-desc { font-size: 10px; color: #999; margin-top: 2px; }
-
         #practices-modal { z-index: 150; }
-
     </style>
 </head>
 <body>
 
-    <div id="fx-galaxy" class="effects-layer active">
+    <div id="fx-galaxy" class="effects-layer active visible" style="display: flex; z-index: 2;">
         <div class="galaxy-wrapper">
             <div class="galaxy-spinner" id="galaxy-spinner"><div class="galaxy-core"></div></div>
         </div>
     </div>
-    <div id="fx-orbit" class="effects-layer">
+
+    <div id="fx-orbit" class="effects-layer" style="z-index: 1;">
         <div class="orbit-ring o1"><div class="planet"></div></div>
         <div class="orbit-ring o2"></div>
     </div>
-    <div id="fx-meteor" class="effects-layer">
+
+    <div id="fx-meteor" class="effects-layer" style="z-index: 1;">
         <div class="meteors-wrap" id="meteors-wrap"></div>
     </div>
 
@@ -277,7 +333,7 @@
                 </div>
                 <div class="c-price">
                     <div class="p-rub">349 ₽</div>
-                    <div class="p-stars">250 ⭐️</div>
+                    <div class="p-stars">300 ⭐️</div>
                 </div>
             </div>
 
@@ -289,7 +345,7 @@
                 </div>
                 <div class="c-price">
                     <div class="p-rub">199 ₽</div>
-                    <div class="p-stars">150 ⭐️</div>
+                    <div class="p-stars">200 ⭐️</div>
                 </div>
             </div>
 
@@ -301,7 +357,7 @@
                 </div>
                 <div class="c-price">
                     <div class="p-rub">99 ₽</div>
-                    <div class="p-stars">75 ⭐️</div>
+                    <div class="p-stars">125 ⭐️</div>
                 </div>
             </div>
         </div>
@@ -367,7 +423,7 @@
                 </div>
 
                 <div class="t-row">
-                    <div class="td-feat"><span class="td-icon">💞</span> Глубокий +<br>визуал.</div>
+                    <div class="td-feat"><span class="td-icon">💞</span> Глубокий +<br>визуал</div>
                     <div class="td-val v-free">🔒</div>
                     <div class="td-val v-prem">3 в день</div>
                 </div>
@@ -439,9 +495,6 @@
         const tg = window.Telegram.WebApp;
         tg.expand(); 
 
-        // --- ГЕНЕРАЦИЯ (ОПТИМИЗИРОВАННАЯ) ---
-        
-        // 1. Галактика (Reduced count to 60)
         const galaxySpinner = document.getElementById('galaxy-spinner');
         const colors = ['#fff', '#a0c4ff', '#ffd700', '#b5179e'];
         const fragGalaxy = document.createDocumentFragment();
@@ -464,7 +517,6 @@
         }
         galaxySpinner.appendChild(fragGalaxy);
 
-        // 2. Метеоры
         const meteorWrap = document.getElementById('meteors-wrap');
         const fragMeteors = document.createDocumentFragment();
         const mPos = [
@@ -481,7 +533,6 @@
         });
         meteorWrap.appendChild(fragMeteors);
 
-        // 3. Фон звезд (Reduced count to 30)
         const starsWrap = document.getElementById('stars-bg');
         const fragStars = document.createDocumentFragment();
         for(let i=0; i<30; i++) {
@@ -497,8 +548,6 @@
         }
         starsWrap.appendChild(fragStars);
 
-        // --- ЛОГИКА ---
-        
         let activePlan = 'month';
         
         const DOM = {
@@ -519,13 +568,30 @@
         function setPlan(plan) {
             if(activePlan === plan) return;
             
-            DOM.cards[activePlan].classList.remove('active');
-            DOM.effects[activePlan].classList.remove('active');
-
-            DOM.cards[plan].classList.add('active');
-            DOM.effects[plan].classList.add('active');
-
+            const oldPlan = activePlan;
             activePlan = plan;
+
+            DOM.cards[oldPlan].classList.remove('active');
+            DOM.cards[activePlan].classList.add('active');
+
+            const oldFx = DOM.effects[oldPlan];
+            const newFx = DOM.effects[activePlan];
+
+            newFx.style.display = 'flex';
+            newFx.style.zIndex = 3; 
+            oldFx.style.zIndex = 2; 
+
+            requestAnimationFrame(() => {
+                newFx.classList.add('visible');
+                oldFx.classList.remove('visible');
+            });
+
+            setTimeout(() => {
+                if (activePlan !== oldPlan) {
+                    oldFx.style.display = 'none';
+                    oldFx.style.zIndex = 1; 
+                }
+            }, 700); 
 
             if(tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
         }
@@ -535,23 +601,16 @@
             tg.sendData(JSON.stringify({ method, plan: activePlan }));
         }
 
-        // --- MODAL LOGIC ---
         function openModal() {
             DOM.modal.classList.add('open');
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
         function closeModal(e) {
-            if (e.target === DOM.modal) {
-                DOM.modal.classList.remove('open');
-            }
+            if (e.target === DOM.modal) DOM.modal.classList.remove('open');
         }
-        
-        function closeModalBtn() {
-            DOM.modal.classList.remove('open');
-        }
+        function closeModalBtn() { DOM.modal.classList.remove('open'); }
 
-        // --- PRACTICES MODAL ---
         function openPractices(e) {
             e.stopPropagation();
             DOM.pracModal.classList.add('open');
@@ -559,14 +618,9 @@
         }
 
         function closePractices(e) {
-            if (e.target === DOM.pracModal) {
-                DOM.pracModal.classList.remove('open');
-            }
+            if (e.target === DOM.pracModal) DOM.pracModal.classList.remove('open');
         }
-
-        function closePracticesBtn() {
-            DOM.pracModal.classList.remove('open');
-        }
+        function closePracticesBtn() { DOM.pracModal.classList.remove('open'); }
 
     </script>
 </body>
