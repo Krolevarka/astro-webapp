@@ -625,7 +625,13 @@
 
         function sendPay(method) {
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            tg.sendData(JSON.stringify({ method, plan: activePlan }));
+            
+            // [DEBUG] Добавлен отлов ошибок для диагностики
+            try {
+                tg.sendData(JSON.stringify({ method, plan: activePlan }));
+            } catch (e) {
+                alert("Ошибка отправки (sendData): " + e.message + "\n\nУбедитесь, что открыли магазин через НИЖНЮЮ кнопку клавиатуры.");
+            }
         }
 
         function openModal() {
