@@ -311,27 +311,30 @@
         .pi-desc { font-size: 10px; color: #999; margin-top: 2px; }
         #practices-modal { z-index: 150; }
 
-        /* [NEW] REDESIGNED PAYMENT SCREEN (FIXED) */
+        /* [NEW] REDESIGNED PAYMENT SCREEN (GOLDEN PULSAR + PREMIUM TRANSITIONS) */
         #payment-container {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.7); /* Сильное затемнение фона */
-            backdrop-filter: blur(25px);     /* Сильное размытие (Glassmorphism) */
-            -webkit-backdrop-filter: blur(25px);
+            background: rgba(0, 0, 0, 0.85); /* Глубокое затемнение */
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             z-index: 200;
             flex-direction: column;
             padding: 16px;
-            animation: fadeIn 0.3s ease-out;
-            overflow-y: auto; /* Разрешаем скролл если экран маленький */
+            overflow-y: auto; /* На случай маленьких экранов */
+            
+            /* Initial state for transition */
+            opacity: 0;
+            transition: opacity 0.4s ease, backdrop-filter 0.4s ease;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.98); }
-            to { opacity: 1; transform: scale(1); }
+        /* Class to trigger entry animation */
+        #payment-container.open {
+            opacity: 1;
         }
 
-        /* Навигационная панель оплаты */
+        /* Header Navigation */
         .payment-navbar {
             display: flex;
             align-items: center;
@@ -341,9 +344,11 @@
             width: 100%;
             max-width: 500px;
             margin-left: auto; margin-right: auto;
+            position: relative;
+            z-index: 5;
         }
 
-        /* Стильная кнопка назад (Круглая, прозрачная) */
+        /* Stylish Back Button */
         .nav-back-glass {
             width: 44px; height: 44px;
             border-radius: 50%;
@@ -356,12 +361,9 @@
             backdrop-filter: blur(5px);
         }
         .nav-back-glass:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.15); }
-        
-        .nav-back-glass svg {
-            width: 20px; height: 20px; fill: #fff; transform: translateX(-1px);
-        }
+        .nav-back-glass svg { width: 20px; height: 20px; fill: #fff; transform: translateX(-1px); }
 
-        /* Заголовок "ОПЛАТА" */
+        /* Payment Title */
         .payment-page-title {
             font-family: var(--font-title);
             font-size: 26px;
@@ -370,16 +372,17 @@
             letter-spacing: 3px;
             color: var(--gold);
             text-shadow: 0 2px 15px rgba(255, 215, 0, 0.3);
-            /* Градиентный текст */
             background: linear-gradient(135deg, #fff 0%, #ffd700 50%, #d4af37 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
-        /* Пустышка для балансировки Flexbox */
         .nav-placeholder { width: 44px; }
 
-        /* Контейнер виджета */
+        /* Widget Container */
         .payment-wrapper {
             flex-grow: 1;
             display: flex;
@@ -388,38 +391,70 @@
             max-width: 500px;
             margin: 0 auto;
             position: relative;
+            justify-content: center; /* Center vertically if space allows */
         }
 
-        /* Карточка виджета */
-        .widget-box {
-            background: #ffffff; /* Белый фон для виджета */
-            border-radius: 24px;
-            overflow: hidden; /* Обрезаем углы iframe */
-            width: 100%;
-            /* Минимальная высота, чтобы не схлопывался, но auto для роста */
-            min-height: 500px; 
-            height: auto;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        /* The Card for the Widget */
+        .payment-card-wrapper {
             position: relative;
+            width: 100%;
             z-index: 2;
+            /* Entry Animation State */
+            transform: translateY(30px) scale(0.95);
+            opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.4s ease;
         }
 
-        /* Золотое свечение за карточкой */
-        .widget-box::after {
+        /* Active state for card animation */
+        #payment-container.open .payment-card-wrapper {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        .widget-box {
+            background: #ffffff;
+            border-radius: 24px;
+            overflow: hidden;
+            width: 100%;
+            min-height: 500px;
+            height: auto;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            position: relative;
+        }
+
+        /* Top Decorative Line */
+        .widget-box::before {
             content: '';
             position: absolute;
-            top: 20px; left: 10px; right: 10px; bottom: -10px;
-            background: var(--gold);
-            filter: blur(40px);
-            opacity: 0.15;
+            top: 0; left: 0; right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--gold), #a67c52);
+            z-index: 5;
+        }
+
+        /* GOLDEN PULSAR EFFECT (Variant 1) */
+        .gold-pulsar {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%; height: 100%;
+            max-width: 600px; /* Limit size */
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, rgba(0,0,0,0) 70%);
             z-index: -1;
+            pointer-events: none;
+            animation: pulse-gold 4s infinite ease-in-out;
             border-radius: 50%;
+        }
+
+        @keyframes pulse-gold {
+            0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.95); }
+            50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.05); }
         }
 
         #yookassa-widget {
             width: 100%;
             height: 100%;
-            min-height: 500px; /* Гарантируем высоту */
+            min-height: 500px;
         }
 
     </style>
@@ -514,11 +549,16 @@
                 </svg>
             </div>
             <div class="payment-page-title">ОПЛАТА</div>
-            <div class="nav-placeholder"></div> </div>
+            <div class="nav-placeholder"></div>
+        </div>
         
         <div class="payment-wrapper">
-            <div class="widget-box">
-                <div id="yookassa-widget"></div>
+            <div class="gold-pulsar"></div>
+            
+            <div class="payment-card-wrapper">
+                <div class="widget-box">
+                    <div id="yookassa-widget"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -808,7 +848,13 @@
         }
 
         function openPaymentWidget(token) {
-            document.getElementById('payment-container').style.display = 'flex';
+            const container = document.getElementById('payment-container');
+            container.style.display = 'flex';
+            
+            // Animation Trigger
+            requestAnimationFrame(() => {
+                container.classList.add('open');
+            });
             
             checkoutWidget = new window.YooMoneyCheckoutWidget({
                 confirmation_token: token,
@@ -822,11 +868,19 @@
         }
 
         function closePayment() {
-            document.getElementById('payment-container').style.display = 'none';
-            if (checkoutWidget) {
-                checkoutWidget.destroy();
-                checkoutWidget = null;
-            }
+            const container = document.getElementById('payment-container');
+            
+            // Trigger Exit Animation
+            container.classList.remove('open');
+            
+            // Wait for animation to finish before removing DOM element
+            setTimeout(() => {
+                container.style.display = 'none';
+                if (checkoutWidget) {
+                    checkoutWidget.destroy();
+                    checkoutWidget = null;
+                }
+            }, 400); // 400ms matches transition time in CSS
         }
 
         function openModal() {
