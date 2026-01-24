@@ -311,26 +311,109 @@
         .pi-desc { font-size: 10px; color: #999; margin-top: 2px; }
         #practices-modal { z-index: 150; }
 
-        /* [NEW] Payment Widget Styles */
+        /* [NEW] Improved Payment Widget Styles */
         #payment-container {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: #0f0f20;
+            background: rgba(5, 5, 10, 0.95); /* Глубокий темный фон, слегка прозрачный */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             z-index: 200;
             flex-direction: column;
             padding: 20px;
+            animation: fadeIn 0.3s ease-out;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
         #payment-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
+            height: 44px;
         }
-        .back-btn {
-            color: #fff; background: none; border: none; font-size: 16px; cursor: pointer;
+
+        .nav-back-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
             font-family: var(--font-main);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
         }
+
+        .nav-back-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .payment-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            /* Стиль как у .app-title */
+            font-family: var(--font-title);
+            font-size: 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(120deg, #a67c52 0%, #ffd700 20%, #fff 50%, #ffd700 80%, #a67c52 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gold-text 12s linear infinite;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            margin: 0;
+        }
+
+        .payment-card-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .widget-card {
+            width: 100%;
+            background: #ffffff; /* Белый фон для идеального контраста виджета */
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Декоративный элемент сверху карточки, как чек */
+        .widget-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--gold), #a67c52);
+        }
+
         #yookassa-widget {
-            width: 100%; height: 100%;
+            width: 100%;
+            height: 100%;
+            min-height: 400px; /* Чтобы не схлопывался */
         }
     </style>
 </head>
@@ -418,11 +501,17 @@
 
     <div id="payment-container">
         <div id="payment-header">
-            <button class="back-btn" onclick="closePayment()">⬅ Назад</button>
-            <div class="app-title" style="font-size: 18px; margin:0;">Оплата</div>
-            <div style="width: 40px;"></div>
+            <button class="nav-back-btn" onclick="closePayment()">
+                <span>⬅</span> Назад
+            </button>
+            <div class="payment-title">Оплата</div>
+            <div style="width: 80px;"></div> </div>
+        
+        <div class="payment-card-wrapper">
+            <div class="widget-card">
+                <div id="yookassa-widget"></div>
+            </div>
         </div>
-        <div id="yookassa-widget"></div>
     </div>
 
     <div class="modal-overlay" id="features-modal" onclick="closeModal(event)">
