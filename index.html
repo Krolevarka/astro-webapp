@@ -652,35 +652,42 @@
             if(tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
         }
 
-        // [UPDATED] Payment Logic with Widget
+        // [PAYMENT LOGIC]
         let checkoutWidget = null;
 
         async function sendPay(method) {
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             
-            // 1. Оплата Telegram Stars (оставляем старый метод)
+            // 1. Оплата Telegram Stars
             if (method === 'stars') {
                 try {
                     tg.sendData(JSON.stringify({ method, plan: activePlan }));
+                    // Закрываем окно, чтобы юзер увидел инвойс в чате
+                    tg.close();
                 } catch (e) {
                     alert("Ошибка отправки: " + e.message);
                 }
                 return;
             }
 
-            // 2. Оплата Картой РФ (ЮКасса Виджет)
+            // 2. Оплата Картой РФ (ЮКасса)
             if (method === 'rub') {
                 const btn = document.querySelector('.btn-main');
                 const originalText = btn.innerHTML;
                 btn.innerHTML = '⏳ Загрузка...';
                 
                 try {
-                    // Запрос на бэкенд для создания платежа
+                    // Используем HTTPS и твой домен!
                     const response = await fetch('https://astrointelligence.ru/api/create-payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ plan: activePlan, user_id: userId })
                     });
+
+                    // [NEW] Проверка на ошибку сервера (например 500)
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
 
                     const data = await response.json();
 
@@ -695,7 +702,7 @@
                     }
 
                 } catch (e) {
-                    alert("Ошибка сети: " + e.message);
+                    alert("Ошибка: " + e.message + "\nПопробуйте позже.");
                 } finally {
                     btn.innerHTML = originalText;
                 }
