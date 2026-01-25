@@ -669,7 +669,10 @@
                     // [IMPORTANT] Убедитесь, что этот URL доступен по HTTPS
                     const response = await fetch('https://astrointelligence.ru/api/create-payment', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Api-Key': 'Lkkzf231145sfllaoziiekllovf29401193' // <--- Вставь свой ключ из .env здесь!
+                        },
                         body: JSON.stringify({ 
                             plan: activePlan, 
                             user_id: userId, // Используем надежный ID
