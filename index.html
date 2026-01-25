@@ -522,9 +522,7 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand(); 
-        
-        // [IMPORTANT] Сообщаем Telegram, что приложение готово
-        tg.ready();
+        tg.ready(); // [FIX] Сообщаем Телеграму, что WebApp готов к работе
 
         const galaxySpinner = document.getElementById('galaxy-spinner');
         const colors = ['#fff', '#a0c4ff', '#ffd700', '#b5179e'];
@@ -627,42 +625,17 @@
             if(tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
         }
 
-        // --- УТИЛИТА ДЛЯ ПОЛУЧЕНИЯ ДАННЫХ ИЗ ХЭША ---
-        function getTelegramData() {
-            // 1. Пробуем стандартный объект
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                return tg.initDataUnsafe.user;
-            }
-            
-            // 2. Fallback: Парсим хэш URL вручную
-            // Телеграм передает данные в location.hash вида #tgWebAppData=...
-            try {
-                const hash = window.location.hash.substring(1);
-                const params = new URLSearchParams(hash);
-                const webAppData = params.get('tgWebAppData');
-                
-                if (webAppData) {
-                    const dataParams = new URLSearchParams(webAppData);
-                    const userJson = dataParams.get('user');
-                    if (userJson) {
-                        return JSON.parse(userJson);
-                    }
-                }
-            } catch (e) {
-                console.error("Hash parse error", e);
-            }
-            return null;
-        }
-
+        // [PAYMENT LOGIC]
         async function sendPay(method) {
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             
-            // [FIX] Получаем User ID с использованием Fallback
-            const user = getTelegramData();
+            // [FIX] Безопасное получение данных
+            const initDataUnsafe = tg.initDataUnsafe || {};
+            const user = initDataUnsafe.user;
             const userId = user ? user.id : 0;
 
             if (!userId) {
-                tg.showAlert("Ошибка: ID не найден. (Hash: " + window.location.hash + ")");
+                tg.showAlert("Ошибка: ID пользователя не найден. Данные: " + JSON.stringify(initDataUnsafe));
                 return;
             }
 
@@ -686,13 +659,14 @@
                 try {
                     openPaymentScreen();
 
+                    // [IMPORTANT] Убедитесь, что этот URL доступен по HTTPS
                     const response = await fetch('https://astrointelligence.ru/api/create-payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
                             plan: activePlan, 
                             user_id: userId,
-                            init_data: tg.initData || "" 
+                            init_data: tg.initData 
                         })
                     });
 
@@ -703,13 +677,14 @@
                     const data = await response.json();
 
                     if (data.error) {
-                        tg.showAlert("Ошибка: " + data.error);
+                        tg.showAlert("Ошибка сервера: " + data.error);
                         closePayment();
                         btn.innerHTML = originalText;
                         return;
                     }
 
                     if (data.confirmation_url) {
+                        // [FIX] Открываем системный браузер (важно для банков)
                         tg.openLink(data.confirmation_url, { try_instant_view: false });
                     } else {
                         tg.showAlert("Ошибка: Сервер не вернул ссылку.");
@@ -717,7 +692,7 @@
                     }
 
                 } catch (e) {
-                    tg.showAlert("Ошибка: " + e.message);
+                    tg.showAlert("Ошибка сети: " + e.message);
                     closePayment();
                 } finally {
                     btn.innerHTML = originalText;
