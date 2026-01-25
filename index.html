@@ -642,6 +642,12 @@
         async function sendPay(method) {
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             
+            // Проверка юзера
+            if (!userId) {
+                tg.showAlert("Ошибка: не удалось определить пользователя.");
+                return;
+            }
+
             // 1. Оплата Telegram Stars
             if (method === 'stars') {
                 try {
@@ -690,10 +696,11 @@
 
                     if (data.confirmation_url) {
                         // Redirect to Bank / YooKassa
-                        tg.openLink(data.confirmation_url);
+                        // [FIX] Используем openLink с параметром для системного браузера
+                        tg.openLink(data.confirmation_url, { try_instant_view: false });
                         
-                        // Auto-close WebApp
-                        tg.close(); 
+                        // [FIX] Не закрываем приложение, чтобы пользователь мог вернуться
+                        // tg.close(); 
                     } else {
                         tg.showAlert("Ошибка: Сервер не вернул ссылку.");
                         closePayment();
