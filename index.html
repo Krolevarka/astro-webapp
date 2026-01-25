@@ -522,7 +522,7 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand(); 
-        tg.ready(); // [FIX] Сообщаем Телеграму, что WebApp готов к работе
+        tg.ready(); 
 
         const galaxySpinner = document.getElementById('galaxy-spinner');
         const colors = ['#fff', '#a0c4ff', '#ffd700', '#b5179e'];
@@ -598,13 +598,14 @@
             if(activePlan === plan) return;
             
             const oldPlan = activePlan;
+            const activePlanNew = plan;
             activePlan = plan;
 
             DOM.cards[oldPlan].classList.remove('active');
-            DOM.cards[activePlan].classList.add('active');
+            DOM.cards[activePlanNew].classList.add('active');
 
             const oldFx = DOM.effects[oldPlan];
-            const newFx = DOM.effects[activePlan];
+            const newFx = DOM.effects[activePlanNew];
 
             newFx.style.display = 'flex';
             newFx.style.zIndex = 3; 
@@ -629,13 +630,19 @@
         async function sendPay(method) {
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             
-            // [FIX] Безопасное получение данных
+            // [FIX] Улучшенное получение ID (сначала из URL, потом из initData)
             const initDataUnsafe = tg.initDataUnsafe || {};
             const user = initDataUnsafe.user;
-            const userId = user ? user.id : 0;
+            
+            // 1. Пробуем взять ID из параметров URL (приоритет, так как мы добавили это в боте)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlUserId = urlParams.get('user_id');
+            
+            // 2. Если нет в URL, берем из initData
+            let userId = urlUserId ? parseInt(urlUserId) : (user ? user.id : 0);
 
             if (!userId) {
-                tg.showAlert("Ошибка: ID пользователя не найден. Данные: " + JSON.stringify(initDataUnsafe));
+                tg.showAlert("Ошибка: ID пользователя не найден. Пожалуйста, перезапустите бота.");
                 return;
             }
 
@@ -665,7 +672,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
                             plan: activePlan, 
-                            user_id: userId,
+                            user_id: userId, // Используем надежный ID
                             init_data: tg.initData 
                         })
                     });
