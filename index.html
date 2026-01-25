@@ -642,9 +642,12 @@
         async function sendPay(method) {
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             
-            // Проверка юзера
+            // [FIX] Получаем User ID прямо перед отправкой, чтобы данные точно прогрузились
+            const user = tg.initDataUnsafe?.user;
+            const userId = user?.id;
+
             if (!userId) {
-                tg.showAlert("Ошибка: не удалось определить пользователя.");
+                tg.showAlert("Ошибка: ID пользователя не найден. Данные: " + JSON.stringify(tg.initDataUnsafe || {}));
                 return;
             }
 
@@ -662,7 +665,6 @@
             // 2. Оплата Картой РФ (Redirect)
             if (method === 'rub') {
                 const btn = document.querySelector('.btn-main');
-                // Hardcode reset to avoid visual bugs
                 const originalText = '<span>💳</span> Картой РФ';
                 btn.innerHTML = '⏳ Загрузка...';
                 
@@ -671,13 +673,14 @@
                     openPaymentScreen();
 
                     // HTTPS request to backend
+                    // [IMPORTANT] Замени этот домен на свой реальный, если он отличается
                     const response = await fetch('https://astrointelligence.ru/api/create-payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
                             plan: activePlan, 
                             user_id: userId,
-                            init_data: tg.initData // SECURITY FIX
+                            init_data: tg.initData // Передаем подпись для валидации (опционально)
                         })
                     });
 
@@ -688,26 +691,22 @@
                     const data = await response.json();
 
                     if (data.error) {
-                        tg.showAlert("Ошибка: " + data.error);
+                        tg.showAlert("Ошибка сервера: " + data.error);
                         closePayment();
                         btn.innerHTML = originalText;
                         return;
                     }
 
                     if (data.confirmation_url) {
-                        // Redirect to Bank / YooKassa
-                        // [FIX] Используем openLink с параметром для системного браузера
+                        // [FIX] Открываем в системном браузере (Safari/Chrome), чтобы SberPay работал
                         tg.openLink(data.confirmation_url, { try_instant_view: false });
-                        
-                        // [FIX] Не закрываем приложение, чтобы пользователь мог вернуться
-                        // tg.close(); 
                     } else {
                         tg.showAlert("Ошибка: Сервер не вернул ссылку.");
                         closePayment();
                     }
 
                 } catch (e) {
-                    tg.showAlert("Ошибка: " + e.message);
+                    tg.showAlert("Ошибка сети: " + e.message);
                     closePayment();
                 } finally {
                     btn.innerHTML = originalText;
@@ -718,21 +717,14 @@
         function openPaymentScreen() {
             const container = document.getElementById('payment-container');
             container.style.display = 'flex';
-            
-            void container.offsetWidth; // Force Reflow
-            
-            requestAnimationFrame(() => {
-                container.classList.add('open');
-            });
+            void container.offsetWidth; 
+            requestAnimationFrame(() => { container.classList.add('open'); });
         }
 
         function closePayment() {
             const container = document.getElementById('payment-container');
             container.classList.remove('open');
-            
-            setTimeout(() => {
-                container.style.display = 'none';
-            }, 400); 
+            setTimeout(() => { container.style.display = 'none'; }, 400); 
         }
 
         function openModal() {
@@ -740,9 +732,7 @@
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
-        function closeModal(e) {
-            if (e.target === DOM.modal) DOM.modal.classList.remove('open');
-        }
+        function closeModal(e) { if (e.target === DOM.modal) DOM.modal.classList.remove('open'); }
         function closeModalBtn() { DOM.modal.classList.remove('open'); }
 
         function openPractices(e) {
@@ -751,9 +741,7 @@
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
-        function closePractices(e) {
-            if (e.target === DOM.pracModal) DOM.pracModal.classList.remove('open');
-        }
+        function closePractices(e) { if (e.target === DOM.pracModal) DOM.pracModal.classList.remove('open'); }
         function closePracticesBtn() { DOM.pracModal.classList.remove('open'); }
 
     </script>
