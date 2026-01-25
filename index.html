@@ -164,17 +164,12 @@
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            
-            /* Glassmorphism Background */
             background: rgba(5, 5, 10, 0.65); 
             backdrop-filter: blur(25px) saturate(120%);
             -webkit-backdrop-filter: blur(25px) saturate(120%);
-            
             z-index: 200;
             flex-direction: column;
             padding: 16px;
-            
-            /* Fade Transition */
             opacity: 0;
             transition: opacity 0.4s ease;
         }
@@ -183,7 +178,6 @@
             opacity: 1;
         }
 
-        /* Header Navigation */
         .payment-navbar {
             display: flex;
             align-items: center;
@@ -228,7 +222,6 @@
 
         .nav-placeholder { width: 40px; }
 
-        /* REDIRECT INFO BOX */
         .payment-wrapper {
             flex-grow: 1;
             display: flex;
@@ -239,7 +232,6 @@
             position: relative;
             justify-content: center;
             align-items: center;
-            
             transform: translateY(40px) scale(0.95);
             opacity: 0;
             transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
@@ -250,7 +242,6 @@
             opacity: 1;
         }
 
-        /* Gold Border Container */
         .gold-border-wrap {
             position: relative;
             border-radius: 26px;
@@ -268,9 +259,8 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* Redirect Message Card */
         .widget-box {
-            background: rgba(15, 15, 32, 0.95); /* Dark card */
+            background: rgba(15, 15, 32, 0.95);
             border-radius: 24px;
             width: 100%;
             min-height: 250px;
@@ -532,9 +522,7 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand(); 
-
-        const initDataUnsafe = tg.initDataUnsafe || {};
-        const userId = initDataUnsafe.user ? initDataUnsafe.user.id : 0;
+        tg.ready(); // [FIX] Сообщаем Телеграму, что WebApp готов к работе
 
         const galaxySpinner = document.getElementById('galaxy-spinner');
         const colors = ['#fff', '#a0c4ff', '#ffd700', '#b5179e'];
@@ -638,16 +626,17 @@
         }
 
         // [PAYMENT LOGIC]
-        
         async function sendPay(method) {
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             
-            // [FIX] Получаем User ID прямо перед отправкой, чтобы данные точно прогрузились
+            // [FIX] Извлекаем пользователя В МОМЕНТ НАЖАТИЯ на кнопку
+            // Это решает проблему race condition, когда скрипт грузится раньше initData
             const user = tg.initDataUnsafe?.user;
             const userId = user?.id;
 
             if (!userId) {
-                tg.showAlert("Ошибка: ID пользователя не найден. Данные: " + JSON.stringify(tg.initDataUnsafe || {}));
+                // Если даже сейчас нет ID, значит это браузер или сбой API
+                tg.showAlert("Ошибка: Не удалось получить ID пользователя. Попробуйте перезапустить приложение.");
                 return;
             }
 
@@ -669,18 +658,16 @@
                 btn.innerHTML = '⏳ Загрузка...';
                 
                 try {
-                    // Show Loading Screen
                     openPaymentScreen();
 
-                    // HTTPS request to backend
-                    // [IMPORTANT] Замени этот домен на свой реальный, если он отличается
+                    // [IMPORTANT] Убедитесь, что этот URL доступен по HTTPS
                     const response = await fetch('https://astrointelligence.ru/api/create-payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
                             plan: activePlan, 
                             user_id: userId,
-                            init_data: tg.initData // Передаем подпись для валидации (опционально)
+                            init_data: tg.initData 
                         })
                     });
 
@@ -698,7 +685,7 @@
                     }
 
                     if (data.confirmation_url) {
-                        // [FIX] Открываем в системном браузере (Safari/Chrome), чтобы SberPay работал
+                        // [FIX] Открываем системный браузер (важно для банков)
                         tg.openLink(data.confirmation_url, { try_instant_view: false });
                     } else {
                         tg.showAlert("Ошибка: Сервер не вернул ссылку.");
