@@ -696,6 +696,8 @@
                     if (data.confirmation_url) {
                         // [FIX] Открываем системный браузер (важно для банков)
                         tg.openLink(data.confirmation_url, { try_instant_view: false });
+                        // [NEW] Закрываем WebApp, так как пользователь ушел платить в браузер
+                        tg.close();
                     } else {
                         tg.showAlert("Ошибка: Сервер не вернул ссылку.");
                         closePayment();
