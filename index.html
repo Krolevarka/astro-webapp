@@ -136,12 +136,12 @@
         .m-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 5px; opacity: 0.7; }
 
         .comp-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-        .t-head { display: grid; grid-template-columns: 1.2fr 1fr 1fr; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; }
+        .t-head { display: grid; grid-template-columns: 1.3fr 1fr 1fr; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; }
         .th-cell { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
         .th-feat { text-align: left; padding-left: 5px; color: #aaa; }
         .th-free { color: #888; }
         .th-prem { color: var(--gold); text-shadow: 0 0 10px rgba(255,215,0,0.3); }
-        .t-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.03); transform: translateZ(0); }
+        .t-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.03); transform: translateZ(0); }
         .t-row:nth-child(even) { background: rgba(255,255,255,0.02); }
         .td-feat { font-size: 11px; color: #fff; display: flex; align-items: center; gap: 6px; line-height: 1.2; font-weight: 500; }
         .td-icon { font-size: 14px; min-width: 18px; }
@@ -158,6 +158,19 @@
         .pi-name { font-size: 13px; font-weight: 600; color: #fff; }
         .pi-desc { font-size: 10px; color: #999; margin-top: 2px; }
         #practices-modal { z-index: 150; }
+        
+        /* [NEW] Info alert in practices modal */
+        .prac-info { 
+            font-size: 11px; 
+            color: #aaa; 
+            text-align: center; 
+            margin-bottom: 12px; 
+            padding: 10px; 
+            background: rgba(255, 215, 0, 0.05); 
+            border: 1px solid rgba(255, 215, 0, 0.1); 
+            border-radius: 10px; 
+            line-height: 1.4;
+        }
 
         /* [NEW] Payment Redirect Screen Styles */
         #payment-container {
@@ -416,52 +429,64 @@
 
                 <div class="t-row">
                     <div class="td-feat"><span class="td-icon">📈</span> Уровни</div>
-                    <div class="td-val v-free">До 5 уровня</div>
+                    <div class="td-val v-free">Макс. 6 ур.</div>
                     <div class="td-val v-prem"><span class="v-inf">∞</span></div>
                 </div>
 
                 <div class="t-row">
                     <div class="td-feat"><span class="td-icon">🔮</span> Прогнозы</div>
-                    <div class="td-val v-free">На 1 день</div>
-                    <div class="td-val v-prem">День+Нед+Мес</div>
+                    <div class="td-val v-free">День (Текст)</div>
+                    <div class="td-val v-prem">Нед + Мес</div>
                 </div>
 
                 <div class="t-row">
                     <div class="td-feat"><span class="td-icon">🖼</span> Визуал</div>
-                    <div class="td-val v-free">1 раз<br>в 3 дня</div>
+                    <div class="td-val v-free">1 в 3 дня</div>
                     <div class="td-val v-prem">Всегда</div>
                 </div>
 
                 <div class="t-row">
-                    <div class="td-feat"><span class="td-icon">💬</span> Астролог</div>
-                    <div class="td-val v-free">2 в неделю</div>
-                    <div class="td-val v-prem">100 в день</div>
+                    <div class="td-feat"><span class="td-icon">📉</span> График Ритмов</div>
+                    <div class="td-val v-free">1 в месяц</div>
+                    <div class="td-val v-prem">1 в неделю</div>
+                </div>
+
+                <div class="t-row">
+                    <div class="td-feat"><span class="td-icon">💬</span> Астролог (ИИ)</div>
+                    <div class="td-val v-free">1 в 3 дня</div>
+                    <div class="td-val v-prem">Безлимит</div>
                 </div>
 
                 <div class="t-row">
                     <div class="td-feat"><span class="td-icon">⚡</span> Совместимость</div>
-                    <div class="td-val v-free">1 раз<br>в 2 дня</div>
+                    <div class="td-val v-free">1 в 2 дня</div>
                     <div class="td-val v-prem">50 в день</div>
                 </div>
 
                 <div class="t-row">
-                    <div class="td-feat"><span class="td-icon">💫</span> Расширенный</div>
-                    <div class="td-val v-free">🔒</div>
-                    <div class="td-val v-prem">10 в день</div>
-                </div>
-
-                <div class="t-row">
-                    <div class="td-feat"><span class="td-icon">💞</span> Глубокий +<br>визуал</div>
+                    <div class="td-feat"><span class="td-icon">💞</span> Глубокий разбор</div>
                     <div class="td-val v-free">🔒</div>
                     <div class="td-val v-prem">3 в день</div>
                 </div>
 
                 <div class="t-row">
+                    <div class="td-feat"><span class="td-icon">🔭</span> Монитор Неба</div>
+                    <div class="td-val v-free">1 в день</div>
+                    <div class="td-val v-prem">24 в день</div>
+                </div>
+
+                <div class="t-row">
+                    <div class="td-feat"><span class="td-icon">🧬</span> Биоритмы</div>
+                    <div class="td-val v-free">1 в неделю</div>
+                    <div class="td-val v-prem">Каждый день</div>
+                </div>
+
+                <div class="t-row">
                     <div class="td-feat">
-                        <span class="td-icon">📜</span> Практики
+                        <span class="td-icon">📜</span> Практики Глав
                         <div class="q-btn" onclick="openPractices(event)">?</div>
                     </div>
-                    <div class="td-val v-free">База</div>
+                    <div class="td-val v-free">Базовые</div>
                     <div class="td-val v-prem">Полные</div>
                 </div>
             </div>
@@ -479,6 +504,10 @@
                 <button class="m-close" onclick="closePracticesBtn()">×</button>
             </div>
             
+            <div class="prac-info">
+                🔒 Данные практики открываются только с повышением вашего уровня
+            </div>
+
             <div class="prac-list">
                 <div class="prac-item">
                     <div class="pi-icon">🌙</div>
