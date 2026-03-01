@@ -659,7 +659,7 @@
         async function sendPay(method) {
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             
-            // [FIX] Улучшенное получение ID (сначала из URL, потом из initData)
+            // Улучшенное получение ID (сначала из URL, потом из initData)
             const initDataUnsafe = tg.initDataUnsafe || {};
             const user = initDataUnsafe.user;
             
@@ -700,12 +700,11 @@
                         method: 'POST',
                         headers: { 
                             'Content-Type': 'application/json',
-                            'X-Api-Key': 'Lkkzf231145sfllaoziiekllovf29401193' // <--- Вставь свой ключ из .env здесь!
+                            'X-Tg-Init-Data': tg.initData // Безопасная авторизация через Telegram
                         },
                         body: JSON.stringify({ 
                             plan: activePlan, 
-                            user_id: userId, // Используем надежный ID
-                            init_data: tg.initData 
+                            user_id: userId 
                         })
                     });
 
@@ -723,9 +722,9 @@
                     }
 
                     if (data.confirmation_url) {
-                        // [FIX] Открываем системный браузер (важно для банков)
+                        // Открываем системный браузер (важно для банков)
                         tg.openLink(data.confirmation_url, { try_instant_view: false });
-                        // [NEW] Закрываем WebApp, так как пользователь ушел платить в браузер
+                        // Закрываем WebApp, так как пользователь ушел платить в браузер
                         tg.close();
                     } else {
                         tg.showAlert("Ошибка: Сервер не вернул ссылку.");
