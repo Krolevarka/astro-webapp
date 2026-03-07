@@ -658,13 +658,11 @@
         async function sendPay(method) {
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             
-            const initDataUnsafe = tg.initDataUnsafe || {};
-            const user = initDataUnsafe.user;
-            
             const urlParams = new URLSearchParams(window.location.search);
             const urlUserId = urlParams.get('user_id');
+            const authSig = urlParams.get('auth');
             
-            let userId = urlUserId ? parseInt(urlUserId) : (user ? user.id : 0);
+            let userId = urlUserId ? parseInt(urlUserId) : 0;
 
             if (!userId) {
                 tg.showAlert("Ошибка: ID пользователя не найден. Пожалуйста, перезапустите бота.");
@@ -696,39 +694,18 @@
                         apiUrl = `http://${window.location.host}/api/create-payment`;
                     }
 
-                    // --- СУПЕР ВОССТАНОВЛЕНИЕ INIT DATA ---
-                    let finalInitData = tg.initData;
-                    
-                    // Fallback 1: Попытка достать из URL
-                    if (!finalInitData && window.location.hash.includes('tgWebAppData=')) {
-                        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                        finalInitData = hashParams.get('tgWebAppData');
-                    }
-                    
-                    // Fallback 2: Попытка достать из кэша сессии Telegram (для редиректов)
-                    if (!finalInitData) {
-                        try {
-                            const sessionData = sessionStorage.getItem('__telegram__initParams');
-                            if (sessionData) {
-                                const parsed = JSON.parse(sessionData);
-                                if (parsed && parsed.tgWebAppData) {
-                                    finalInitData = parsed.tgWebAppData;
-                                }
-                            }
-                        } catch(e) {}
-                    }
-
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         mode: 'cors',
                         headers: { 
                             'Content-Type': 'application/json',
-                            'X-Tg-Init-Data': finalInitData || ''
+                            'X-Tg-Init-Data': tg.initData || ''
                         },
                         body: JSON.stringify({ 
                             plan: activePlan, 
                             user_id: userId,
-                            initData: finalInitData || '' 
+                            auth: authSig,
+                            initData: tg.initData || ''
                         })
                     });
 
@@ -738,11 +715,7 @@
                             const errorData = await response.json();
                             if (errorData.error) errorMsg += ` | ${errorData.error}`;
                         } catch (e) {}
-                        
-                        const debugInfo = finalInitData 
-                            ? " (initData: PRESENT)" 
-                            : ` (initData: EMPTY! URL: ${window.location.href.substring(0, 50)}...)`;
-                        throw new Error(errorMsg + debugInfo);
+                        throw new Error(errorMsg);
                     }
 
                     const data = await response.json();
