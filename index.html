@@ -159,7 +159,6 @@
         .pi-desc { font-size: 10px; color: #999; margin-top: 2px; }
         #practices-modal { z-index: 150; }
         
-        /* [NEW] Info alert in practices modal */
         .prac-info { 
             font-size: 11px; 
             color: #aaa; 
@@ -659,15 +658,12 @@
         async function sendPay(method) {
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             
-            // Улучшенное получение ID (сначала из URL, потом из initData)
             const initDataUnsafe = tg.initDataUnsafe || {};
             const user = initDataUnsafe.user;
             
-            // 1. Пробуем взять ID из параметров URL (приоритет, так как мы добавили это в боте)
             const urlParams = new URLSearchParams(window.location.search);
             const urlUserId = urlParams.get('user_id');
             
-            // 2. Если нет в URL, берем из initData
             let userId = urlUserId ? parseInt(urlUserId) : (user ? user.id : 0);
 
             if (!userId) {
@@ -692,15 +688,29 @@
                 const originalText = '<span>💳</span> Картой РФ';
                 btn.innerHTML = '⏳ Загрузка...';
                 
+                // [NEW] Защита от открытия вне Telegram
+                if (!tg.initData) {
+                    tg.showAlert("⚠️ Ошибка: Отсутствует авторизация. Пожалуйста, откройте меню оплаты прямо внутри Telegram (через кнопку в боте).");
+                    btn.innerHTML = originalText;
+                    return;
+                }
+                
                 try {
                     openPaymentScreen();
 
-                    // [IMPORTANT] Убедитесь, что этот URL доступен по HTTPS
-                    const response = await fetch('https://astrointelligence.ru/api/create-payment', {
+                    // Определяем URL динамически: если локальная разработка или другой домен
+                    let apiUrl = 'https://astrointelligence.ru/api/create-payment';
+                    // Если фронтенд запущен локально, делаем запрос на тот же хост, иначе по умолчанию.
+                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                        apiUrl = `http://${window.location.host}/api/create-payment`;
+                    }
+
+                    const response = await fetch(apiUrl, {
                         method: 'POST',
+                        mode: 'cors', // [NEW] Явно указываем cors
                         headers: { 
                             'Content-Type': 'application/json',
-                            'X-Tg-Init-Data': tg.initData // Безопасная авторизация через Telegram
+                            'X-Tg-Init-Data': tg.initData
                         },
                         body: JSON.stringify({ 
                             plan: activePlan, 
@@ -709,7 +719,13 @@
                     });
 
                     if (!response.ok) {
-                        throw new Error(`Server error: ${response.status}`);
+                        // [NEW] Более подробная обработка ошибок сервера
+                        let errorMsg = `Server error: ${response.status}`;
+                        try {
+                            const errorData = await response.json();
+                            if (errorData.error) errorMsg += ` - ${errorData.error}`;
+                        } catch (e) {}
+                        throw new Error(errorMsg);
                     }
 
                     const data = await response.json();
@@ -722,9 +738,7 @@
                     }
 
                     if (data.confirmation_url) {
-                        // Открываем системный браузер (важно для банков)
                         tg.openLink(data.confirmation_url, { try_instant_view: false });
-                        // Закрываем WebApp, так как пользователь ушел платить в браузер
                         tg.close();
                     } else {
                         tg.showAlert("Ошибка: Сервер не вернул ссылку.");
@@ -732,7 +746,7 @@
                     }
 
                 } catch (e) {
-                    tg.showAlert("Ошибка сети: " + e.message);
+                    tg.showAlert("Ошибка соединения с сервером: " + e.message);
                     closePayment();
                 } finally {
                     btn.innerHTML = originalText;
