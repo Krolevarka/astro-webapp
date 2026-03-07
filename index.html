@@ -696,17 +696,25 @@
                         apiUrl = `http://${window.location.host}/api/create-payment`;
                     }
 
+                    // [NEW] Ручное спасение хэша. Если tg.initData пустой, пытаемся вытащить его из URL браузера
+                    let finalInitData = tg.initData;
+                    if (!finalInitData && window.location.hash.includes('tgWebAppData=')) {
+                        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                        finalInitData = hashParams.get('tgWebAppData');
+                    }
+
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         mode: 'cors',
                         headers: { 
                             'Content-Type': 'application/json',
-                            // Отправляем tg.initData, если есть, иначе пустую строку
-                            'X-Tg-Init-Data': tg.initData || ''
+                            'X-Tg-Init-Data': finalInitData || ''
                         },
+                        // Дублируем в тело для страховки от CORS
                         body: JSON.stringify({ 
                             plan: activePlan, 
-                            user_id: userId 
+                            user_id: userId,
+                            initData: finalInitData || '' 
                         })
                     });
 
@@ -717,8 +725,10 @@
                             if (errorData.error) errorMsg += ` | ${errorData.error}`;
                         } catch (e) {}
                         
-                        // Добавляем к ошибке информацию для дебага: передался ли initData
-                        const debugInfo = tg.initData ? " (initData: PRESENT)" : " (initData: EMPTY!)";
+                        // Если даже после ручного спасения хэша пусто - выводим всю ссылку для отладки
+                        const debugInfo = finalInitData 
+                            ? " (initData: PRESENT)" 
+                            : ` (URL: ${window.location.href.substring(0, 50)}...)`;
                         throw new Error(errorMsg + debugInfo);
                     }
 
