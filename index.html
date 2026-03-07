@@ -696,11 +696,26 @@
                         apiUrl = `http://${window.location.host}/api/create-payment`;
                     }
 
-                    // [NEW] Ручное спасение хэша. Если tg.initData пустой, пытаемся вытащить его из URL браузера
+                    // --- СУПЕР ВОССТАНОВЛЕНИЕ INIT DATA ---
                     let finalInitData = tg.initData;
+                    
+                    // Fallback 1: Попытка достать из URL
                     if (!finalInitData && window.location.hash.includes('tgWebAppData=')) {
                         const hashParams = new URLSearchParams(window.location.hash.substring(1));
                         finalInitData = hashParams.get('tgWebAppData');
+                    }
+                    
+                    // Fallback 2: Попытка достать из кэша сессии Telegram (для редиректов)
+                    if (!finalInitData) {
+                        try {
+                            const sessionData = sessionStorage.getItem('__telegram__initParams');
+                            if (sessionData) {
+                                const parsed = JSON.parse(sessionData);
+                                if (parsed && parsed.tgWebAppData) {
+                                    finalInitData = parsed.tgWebAppData;
+                                }
+                            }
+                        } catch(e) {}
                     }
 
                     const response = await fetch(apiUrl, {
@@ -710,7 +725,6 @@
                             'Content-Type': 'application/json',
                             'X-Tg-Init-Data': finalInitData || ''
                         },
-                        // Дублируем в тело для страховки от CORS
                         body: JSON.stringify({ 
                             plan: activePlan, 
                             user_id: userId,
@@ -725,10 +739,9 @@
                             if (errorData.error) errorMsg += ` | ${errorData.error}`;
                         } catch (e) {}
                         
-                        // Если даже после ручного спасения хэша пусто - выводим всю ссылку для отладки
                         const debugInfo = finalInitData 
                             ? " (initData: PRESENT)" 
-                            : ` (URL: ${window.location.href.substring(0, 50)}...)`;
+                            : ` (initData: EMPTY! URL: ${window.location.href.substring(0, 50)}...)`;
                         throw new Error(errorMsg + debugInfo);
                     }
 
